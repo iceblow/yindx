@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dianxin.dao.RouteMapper" >
+  <resultMap id="BaseResultMap" type="com.dianxin.model.bo.Route" >
+    <id column="route_id" property="route_id" jdbcType="INTEGER" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="topic" property="topic" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="TIMESTAMP" />
+    <result column="updatedate" property="updatedate" jdbcType="TIMESTAMP"  />
+    <result column="laststep" property="laststep" jdbcType="INTEGER" />
+    <result column="isend" property="isend" jdbcType="INTEGER" />
+    <result column="suspenddate" property="suspenddate" jdbcType="TIMESTAMP" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="longitude" property="longitude" jdbcType="FLOAT" />
+    <result column="latitude" property="latitude" jdbcType="FLOAT" />
+    <result column="owner_id" property="owner_id" jdbcType="INTEGER" />
+    <result column="frequency" property="frequency" jdbcType="INTEGER" />
+    <result column="receivetime" property="receivetime" jdbcType="INTEGER" />
+    <result column="resolvetime" property="resolvetime" jdbcType="INTEGER" />
+    <result column="ss_id" property="ss_id" jdbcType="VARCHAR" />
+    <result column="station_id" property="station_id" jdbcType="VARCHAR" />
+    <result column="receivestart" property="receivestart" jdbcType="TIMESTAMP" />
+    <result column="resolvestart" property="resolvestart" jdbcType="TIMESTAMP" />
+    <result column="renew" property="renew" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="CateResultMap" type="com.dianxin.model.bo.RouteCate" >
+    <id column="route_cate_id" property="route_cate_id" jdbcType="INTEGER" />
+    <result column="route_id" property="route_id" jdbcType="INTEGER" />
+    <result column="category_id" property="category_id" jdbcType="INTEGER" />
+    <result column="pid" property="pid" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="INTEGER" />
+    <result column="category_name" property="category_name" jdbcType="VARCHAR" />
+    <result column="pname" property="pname" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="FlowResultMap" type="com.dianxin.model.bo.RouteFlow" >
+    <id column="route_flow_id" property="route_flow_id" jdbcType="INTEGER" />
+    <result column="route_id" property="route_id" jdbcType="INTEGER" />
+    <result column="holderid" property="holderid" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="TIMESTAMP" />
+    <result column="createcontent" property="createcontent" jdbcType="VARCHAR" />
+    <result column="isrecordfile" property="isrecordfile" jdbcType="INTEGER" />
+    <result column="score" property="score" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="CheckResultMap" type="com.dianxin.model.bo.RouteCateCheck" >
+    <id column="route_check_id" property="route_check_id" jdbcType="INTEGER" />
+    <result column="route_flow_id" property="route_flow_id" jdbcType="INTEGER" />
+    <result column="category_id" property="category_id" jdbcType="INTEGER" />
+    <result column="pid" property="pid" jdbcType="INTEGER" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="problem_id" property="problem_id" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    route_id, name, topic, createdate, updatedate, laststep, isend, suspenddate, address, longitude, latitude, owner_id,frequency, receivetime, resolvetime, receivestart,resolvestart 
+  </sql>
+  <select id="selectRouteById"  resultMap="BaseResultMap"  parameterType="java.lang.Integer">
+       select 
+       <include refid="Base_Column_List" />
+       from t_route
+       where route_id = #{route_id,jdbcType=INTEGER}
+  </select>
+  <select id="selectRouteCate"  resultMap="CateResultMap"  parameterType="java.lang.Integer">
+       select a.route_cate_id,
+       a.route_id,
+       a.category_id,
+       b.name          as category_name,
+       a.pid,
+       c.name          as pname,
+       a.createdate
+  from t_route_cate a, t_template_cate b, t_template_cate c
+ where a.category_id = b.category_id
+   and a.pid = c.category_id
+   and a.route_id = #{route_id,jdbcType=INTEGER}
+ order by a.pid, a.route_cate_id
+  </select>
+  <select id="selectCountNotEnd"  resultType="java.lang.Integer"  parameterType="java.lang.Integer">
+       select count(*)
+       from t_route
+       where owner_id = #{user_id,jdbcType=INTEGER} and isend = 0  and renew = 1 and laststep >= 10
+  </select>
+  <select id="pageQueryNotEnd" resultMap="BaseResultMap" parameterType="java.util.Map">
+    select * from (
+        select rownum as rn, a.* from (
+        select t.*
+  from t_route t where
+        t.owner_id = #{user_id,jdbcType=INTEGER} and t.isend = 0  and t.renew = 1 and t.laststep >= 10
+        order by t.createdate desc
+            ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select>
+  <select id="selectRenewRoute" resultMap="BaseResultMap" >
+        select t.*
+  from t_route t where t.frequency > 0 and t.renew = 1 and t.laststep > 10
+  </select>
+  <update id="updateRouteRenew"  parameterType="java.lang.Integer">
+        update t_route set renew = 0
+        where route_id = #{route_id,jdbcType=INTEGER}
+  </update>
+  <!-- 流程 -->
+  <select id="selectRouteFlow"  resultMap="FlowResultMap"  parameterType="java.lang.Integer">
+       select route_flow_id, route_id, laststep, holderid, createtime, createcontent, isrecordfile, score
+       from t_route_flow
+       where route_id = #{route_id,jdbcType=INTEGER}
+       order by route_flow_id
+  </select>
+  <!-- 巡检 审核 接单 处理 -->
+  <update id="updateRouteStep" parameterType="java.util.Map">
+        update t_route
+        set laststep = #{laststep},
+        <if test="laststep == 11" >
+            receivestart = sysdate,
+        </if>
+        <if test="laststep == 12" >
+            resolvestart = sysdate,
+        </if>
+        <if test="laststep == 13 || laststep == 14 " >
+            isend = 1,
+        </if>
+            updatedate = sysdate
+        where route_id = #{route_id}
+    </update>
+  <insert id="addRouteFlow"  parameterType="com.dianxin.model.bo.RouteFlow">
+        <selectKey resultType="int" order="BEFORE" keyProperty="route_flow_id">
+            select SEQ_ROUTE_FLOW_ID.NEXTVAL as route_flow_id from dual
+        </selectKey>
+        insert into t_route_flow(route_flow_id,
+											route_id,
+											laststep,
+											holderid,
+                <if test="createcontent != null" > createcontent,</if>
+											score
+            ) values
+        (#{route_flow_id},
+                                            #{route_id},
+                                            #{laststep},
+                                            #{holderid},
+                <if test="createcontent != null" >#{createcontent},</if>
+                                            #{score})
+  </insert>
+  <insert id="addRouteCheck" parameterType="com.dianxin.model.bo.RouteCateCheck">
+        insert into t_route_cate_check(route_check_id,
+														route_flow_id,
+														category_id,
+														status,
+														problem_id,
+														pid
+            ) values
+        (seq_route_check_id.nextval,
+                                            #{route_flow_id},
+                                            #{category_id},
+                                           #{status},
+                                            #{problem_id},
+                                            #{pid})
+  </insert>
+  
+  
+   <select id="queryPublicListCount"  resultType="java.lang.Integer"  parameterType="java.lang.Integer">
+       select count(*)
+       from t_route  where 1 = 1
+ 		 <if test="daqu != null and daqu != ''">
+ 		 	and ss_id = #{daqu}
+ 		 </if>
+ 		 <if test="xiaoqu != null and xiaoqu != ''">
+ 			and station_id = #{xiaoqu}
+ 		 </if>
+ 		 <if test="people != null and people != ''">
+ 		 and owner_id = #{people}
+ 		 </if>
+ 		 <if test="frequency != null and frequency != ''">
+ 		 and frequency = #{frequency}
+ 		 </if>
+   </select>
+   
+   <select id="queryPublicList"  resultMap="BaseResultMap" parameterType="java.util.Map">
+      select * from (
+        select rownum as rn, a.* from (
+        select t.*
+ 		 from t_route t where 1 = 1
+ 		 <if test="daqu != null and daqu != ''">
+ 		 	and ss_id = #{daqu}
+ 		 </if>
+ 		 <if test="xiaoqu != null and xiaoqu != ''">
+ 			and station_id = #{xiaoqu}
+ 		 </if>
+ 		 <if test="people != null and people != ''">
+ 		 and owner_id = #{people}
+ 		 </if>
+ 		<if test="frequency != null and frequency != ''">
+ 		 and frequency = #{frequency}
+ 		 </if>
+ 		 <if test="start != null and start != ''">
+ 		  and #{start} &lt;= to_char(createdate,'YYYY-MM-DD') and to_char(createdate,'YYYY-MM-DD') &lt;= #{end}
+ 		 </if>
+ 		order by createdate desc ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+   </select>
+  
+  
+   <select id="queryListCount"  resultType="java.lang.Integer"  parameterType="java.lang.Integer">
+       select count(*)
+       from t_route  where 1 = 1
+ 		 <if test="daqu != null and daqu != ''">
+ 		 	and ss_id = #{daqu}
+ 		 </if>
+ 		 <if test="xiaoqu != null and xiaoqu != ''">
+ 			and station_id = #{xiaoqu}
+ 		 </if>
+ 		 <if test="people != null and people != ''">
+ 		 and owner_id = #{people}
+ 		 </if>
+ 		 <if test="state != null and state != ''">
+ 		 and laststep = #{state}
+ 		 </if>
+ 		 <if test="frequency != null and frequency != ''">
+ 		 and frequency = #{frequency}
+ 		 </if>
+ 		  <if test="start != null and start != ''">
+ 		  and #{start} &lt;= to_char(createdate,'YYYY-MM-DD') 
+ 		 </if>
+ 		 <if test="end != null and end != ''">
+ 		  and to_char(createdate,'YYYY-MM-DD') &lt;= #{end}
+ 		 </if>
+   </select>
+   
+   <select id="queryList"  resultMap="BaseResultMap" parameterType="java.util.Map">
+      select * from (
+        select rownum as rn, a.* from (
+        select t.*
+ 		 from t_route t where 1 = 1
+ 		 <if test="daqu != null and daqu != ''">
+ 		 	and ss_id = #{daqu}
+ 		 </if>
+ 		 <if test="xiaoqu != null and xiaoqu != ''">
+ 			and station_id = #{xiaoqu}
+ 		 </if>
+ 		 <if test="people != null and people != ''">
+ 		 and owner_id = #{people}
+ 		 </if>
+ 		 <if test="state != null and state != ''">
+ 		 and laststep = #{state}
+ 		 </if>
+ 		  <if test="frequency != null and frequency != ''">
+ 		 and frequency = #{frequency}
+ 		 </if>
+ 		 <if test="start != null and start != ''">
+ 		  and #{start} &lt;= to_char(createdate,'YYYY-MM-DD') 
+ 		 </if>
+ 		 <if test="end != null and end != ''">
+ 		  and to_char(createdate,'YYYY-MM-DD') &lt;= #{end}
+ 		 </if>
+ 		order by createdate desc ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+   </select>
+    
+    <!-- 巡检发布 -->
+    <insert id="insertRoute" parameterType="com.dianxin.model.bo.Route">
+        <selectKey resultType="int" order="BEFORE" keyProperty="route_id">
+            select SEQ_ROUTE_ID.NEXTVAL as route_id from dual
+        </selectKey>
+        INSERT INTO t_route
+        (
+		        route_id
+				<if test="name != null" > ,name</if>
+                <if test="topic != null" > ,topic</if>
+				,laststep
+                <if test="suspenddate != null" > ,suspenddate</if>
+                <if test="address != null" > ,address</if>
+                <if test="longitude != null" > ,longitude</if>
+                <if test="latitude != null" > ,latitude</if>
+				,ss_id
+				,station_id
+				,owner_id
+				,frequency
+				,receivetime
+				,resolvetime
+                <if test="receivestart != null" > ,receivestart</if>
+                ,typeid
+                ,typename
+        )  VALUES  (
+                #{route_id}
+                <if test="name != null" > ,#{name}</if>
+                <if test="topic != null" > ,#{topic}</if>
+                ,#{laststep}
+                <if test="suspenddate != null" > ,#{suspenddate}</if>
+                <if test="address != null" > ,#{address}</if>
+                <if test="longitude != null" > ,#{longitude}</if>
+                <if test="latitude != null" > ,#{latitude}</if>
+                ,#{ss_id}
+                ,#{station_id}
+                ,#{owner_id}
+                ,#{frequency}
+                ,#{receivetime}
+                ,#{resolvetime}
+                <if test="receivestart != null" > ,#{receivestart}</if>
+                ,#{typeid}
+                ,#{typename}
+        )
+    </insert>
+    <insert id="insertRouteCate" parameterType="com.dianxin.model.bo.RouteCate">
+    INSERT INTO t_route_cate
+        (
+                route_cate_id
+				,route_id
+				,category_id
+				,pid
+        )  VALUES  (
+                seq_route_cate_id.nextval
+                ,#{route_id}
+                ,#{category_id}
+                ,#{pid}
+        )
+    </insert>
+    <insert id="insertRouteFlow"  parameterType="com.dianxin.model.bo.RouteFlow">
+    INSERT INTO t_route_flow
+        (
+                route_flow_id
+				,route_id
+				,laststep
+				,holderid
+                <if test="createcontent != null" > ,createcontent</if>
+                <if test="isrecordfile != null" > ,isrecordfile</if>
+                <if test="score != null" > ,score</if>
+        )  VALUES  (
+                seq_route_flow_id.nextval
+                ,#{route_id}
+                ,#{laststep}
+                ,#{holderid}
+                <if test="createcontent != null" > ,#{createcontent}</if>
+                <if test="isrecordfile != null" > ,#{isrecordfile}</if>
+                <if test="score != null" > ,#{score}</if>
+        )
+    </insert>
+   
+   <select id="selectRouteCateCheckByFlowId"  resultMap="CheckResultMap"  parameterType="java.lang.Integer">
+       select *
+  from t_route_cate_check  where route_flow_id = #{id}
+  </select>
+  
+   <select id="selectRouteCateCheckByPid"  resultMap="CheckResultMap"  parameterType="java.lang.Integer">
+       select *
+  from t_route_cate_check  where pid = #{id}
+  </select>
+</mapper>

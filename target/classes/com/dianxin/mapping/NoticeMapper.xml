@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dianxin.dao.NoticeMapper" >
+  <resultMap id="BaseResultMap" type="com.dianxin.model.bo.Notice" >
+    <id column="notice_id" property="notice_id" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="CLOB"  javaType="java.lang.String" />
+    <result column="picurl" property="picurl" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="INTEGER" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+    <result column="settop" property="settop" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="TIMESTAMP" />
+    <result column="holderid" property="holderid" jdbcType="INTEGER" />
+    <result column="holdername" property="holdername" jdbcType="VARCHAR" />
+    <result column="readcount" property="readcount" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="ListResultMap" type="com.dianxin.model.vo.NoticeListVo" >
+    <id column="notice_id" property="notice_id" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="picurl" property="picurl" jdbcType="VARCHAR" />
+    <result column="type" property="type" jdbcType="INTEGER" />
+  </resultMap>
+  <select id="selectBannerList" resultMap="ListResultMap">
+    select notice_id, title,picurl,type
+    from t_notice
+    where status = 0 and settop = 1
+    order by createdate desc
+  </select>
+  <select id="selectTipsList" resultMap="ListResultMap">
+    select * from (
+        select rownum as rn, a.* from (
+            select notice_id, title,picurl,type,readcount
+            from t_notice
+            where status = 0 
+        order by createdate) a)  b 
+        <![CDATA[where b.rn <= 3]]>
+  </select>
+  <select id="selectTotal" resultType="java.lang.Integer" parameterType="java.lang.Integer" >
+    select count(*) from t_notice where status = 0 
+    <if test="_parameter != null" >
+            and type = #{type,jdbcType=INTEGER}
+    </if>
+  </select>
+  <select id="pageQuery" resultMap="ListResultMap" parameterType="java.util.Map">
+    select * from (
+        select rownum as rn, a.* from (
+            select notice_id, title,picurl,type,readcount
+            from t_notice
+            where status = 0 
+            <if test="type != null" >
+                and type = #{type,jdbcType=INTEGER}
+            </if>
+        order by createdate desc) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select>
+  <select id="selectNoticeDetail" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select  notice_id,
+               title,
+               content,
+               picurl,
+               type,
+               status,
+               settop,
+               createdate,
+               holderid,
+               holdername,
+               readcount
+    from t_notice
+    where notice_id = #{notice_id,jdbcType=INTEGER}
+  </select>
+  <update id="updataNoticeRead" parameterType="java.lang.Integer">
+        update t_notice set readcount=readcount+1
+        where notice_id=#{notice_id,jdbcType=INTEGER}
+  </update>
+  <insert id="addNotice" parameterType="com.dianxin.model.bo.Notice">
+        <selectKey resultType="int" order="BEFORE" keyProperty="notice_id">
+            select SEQ_NOTICE_ID.NEXTVAL as notice_id from dual
+        </selectKey>
+        insert into t_notice(notice_id, title, content, picurl, holderid,holdername) values
+        (#{notice_id}, #{title}, #{content, jdbcType=CLOB}, #{picurl}, #{holderid},#{holdername})
+  </insert>
+  
+ <insert id="addNoticePer" parameterType="com.dianxin.model.bo.Notice">
+        <selectKey resultType="int" order="BEFORE" keyProperty="notice_id">
+            select SEQ_NOTICE_ID.NEXTVAL as notice_id from dual
+        </selectKey>
+        insert into t_notice(notice_id, title, content, picurl, holderid,holdername,type) values
+        (#{notice_id}, #{title}, #{content, jdbcType=CLOB}, #{picurl}, #{holderid,jdbcType=INTEGER},#{holdername,jdbcType=VARCHAR},#{type})
+  </insert>
+  <update id="updataNoticeStatus" parameterType="java.util.Map">
+        update t_notice set status=#{status,jdbcType=INTEGER}
+        where notice_id=#{notice_id,jdbcType=INTEGER}
+  </update>
+  <update id="updataNoticeSettop" parameterType="java.util.Map">
+        update t_notice set settop=#{settop,jdbcType=INTEGER},createdate = sysdate
+        where notice_id=#{notice_id,jdbcType=INTEGER}
+  </update>
+  
+   <update id="updataNoticeBySelecter" parameterType="com.dianxin.model.bo.Notice" >
+        update t_notice 
+ 	 <set >
+          <if test="title != null" >
+        TITLE =  #{title},
+      </if>
+ 		
+ 		 <if test="content != null" >
+         CONTENT =  #{content},
+      </if>
+         <if test="picurl != null" >
+        PICURL = #{picurl},
+      </if>
+		 <if test="type != null" >
+       TYPE =  #{type},
+      </if>
+		 <if test="status != null" >
+       STATUS =  #{status},
+      </if>
+		 <if test="settop != null" >
+        SETTOP = #{settop},
+      </if>
+		 <if test="createdate != null" >
+        CREATEDATE = #{createdate},
+      </if>
+		 <if test="holderid != null" >
+        HOLDERID = #{holderid},
+      </if>
+		 <if test="holdername != null" >
+       HOLDERNAME =  #{holdername},
+      </if>
+		 <if test="readcount != null" >
+        READCOUNT = #{readcount},
+      </if>
+		
+	</set>
+
+        where notice_id=#{notice_id,jdbcType=INTEGER}
+  </update>
+  
+  <update id="updataNoticeImgUrl" parameterType="java.util.Map">
+        update t_notice set picurl=#{imgurl}
+        where notice_id=#{notice_id,jdbcType=INTEGER}
+  </update>
+  
+  <select id="selectByInfo" resultMap="BaseResultMap" parameterType="map" >
+   select  notice_id,
+               title,
+               content,
+               picurl,
+               type,
+               status,
+               settop,
+               createdate,
+               holderid,
+               holdername,
+               readcount
+    from (select n.*,rownum as rn from (select * from t_notice  
+    
+      <where>
+      	status = 0
+   		<if test="selectVal != null" >
+   		<![CDATA[and (title like #{selectVal } or content like #{selectVal })]]>
+   		</if>
+   		<if test="start_time != null" >
+   			<![CDATA[and createdate >= #{start_time}]]>
+   		</if>
+   		<if test="end_time != null" >
+   			<![CDATA[ and createdate <= #{end_time}]]>
+   		</if>
+   		<if test="type != 0" >
+   			<![CDATA[ and type = #{type}]]>
+   		</if>
+   </where>
+   order by createdate desc)  n ) n2
+     <where>
+    <![CDATA[ and n2.rn between #{start} and #{end}]]>
+    </where>
+  </select>
+  
+  <select id="getCount" resultType="long" parameterType="map" >
+  	select count(notice_id) from t_notice
+  	<where>
+  		status = 0
+   		<if test="selectVal != null" >
+   			<![CDATA[and (title like #{selectVal } or content like #{selectVal })]]>
+   		</if>
+   		<if test="type != 0" >
+   			<![CDATA[ and type = #{type}]]>
+   		</if>
+   		<if test="start_time != null" >
+   			<![CDATA[and createdate >= #{start_time}]]>
+   		</if>
+   		<if test="end_time != null" >
+   			<![CDATA[ and createdate <= #{end_time}]]>
+   		</if>
+   </where>
+  </select>
+  <delete id="deletenotice" parameterType="java.lang.Integer" >
+    delete from t_notice where notice_id =  #{id,jdbcType=INTEGER}
+  </delete>
+</mapper>

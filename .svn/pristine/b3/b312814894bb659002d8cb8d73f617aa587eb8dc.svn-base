@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dianxin.dao.DeviceMapper" >
+  <resultMap id="TypeResultMap" type="com.dianxin.model.bo.DeviceType" >
+    <id column="typeid" property="typeid" jdbcType="VARCHAR" />
+    <result column="typename" property="typename" jdbcType="VARCHAR" />
+  </resultMap>
+  <select id="selectTypeList" resultMap="TypeResultMap">
+    select typeid, typename
+    from VW_INTERFACE_AEFDEVICETYPE
+    order by typeid
+  </select>
+  
+    <select id="selectTypeById" resultMap="TypeResultMap" parameterType="java.lang.String">
+    select typeid, typename
+    from VW_INTERFACE_AEFDEVICETYPE
+    where typeid = #{typeid}
+  </select>
+  
+  	<select id="queryListCount"  resultType="java.lang.Integer"  parameterType="java.lang.Integer">
+       select count(*)
+       from t_device
+       <where>
+       <if test="name != null and name.length()>0">
+   			 and name like  '%'||#{name}||'%'
+ 		 </if>
+ 		<if test="typeid != null  and typeid.length()>0">
+ 			 and typeid = #{typeid}
+ 		</if>
+ 		<if test="ss_id != null  and ss_id.length()>0">
+ 			 and ss_id = #{ss_id}
+ 		</if>
+ 		<if test="station_id != null  and station_id.length()>0">
+ 			 and station_id = #{station_id}
+ 		</if>
+ 		</where>
+   </select>
+   
+   <select id="queryList"  resultType="com.dianxin.model.vo.DeviceVo" parameterType="java.util.Map">
+      select * from (
+        select rownum as rn, a.* from (
+       select t.*, s.ss_name, s.station_name, vd.typename
+		  from t_device                   t,
+		       VW_INTERFACE_AEFSTATION     s,
+		       VW_INTERFACE_AEFDEVICETYPE vd
+		 where 
+		   t.station_id = s.station_id
+   			and t.typeid = vd.TYPEID
+   			<if test="name != null and name.length()>0">
+   			 and t.name like  '%'||#{name}||'%'
+	 		 </if>
+	 		<if test="typeid != null  and typeid.length()>0">
+	 			 and t.typeid = #{typeid}
+	 		</if>
+	 		<if test="ss_id != null  and ss_id.length()>0">
+	 			 and t.ss_id = #{ss_id}
+	 		</if>
+	 		<if test="station_id != null  and station_id.length()>0">
+	 			 and t.station_id = #{station_id}
+	 		</if>
+	 		ORDER BY createdate
+ 		  ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+   </select>
+   
+   <select id="getDeviceById"  resultType="com.dianxin.model.bo.Device"  parameterType="java.lang.Integer">
+    select * from  t_device where device_id = #{device_id}
+   </select>
+   <update id="updateDevice" parameterType="com.dianxin.model.bo.Device">
+   	update t_device set 
+   	typeid =  #{typeid}, 
+   	name = #{name} , 
+   	address = #{address}, 
+   	longitude =  #{longitude},
+   	latitude = #{latitude},
+   	topic = #{topic},
+   	imgs =  #{imgs},
+   	ss_id = #{ss_id},
+   	station_id = #{station_id},
+   	update_id = #{update_id},
+   	updatedate = #{updatedate},
+   	status = 	#{status}
+   	where device_id = #{device_id}
+   </update>
+   <delete id="delDevice" parameterType="java.lang.Integer">
+    delete from  t_device where device_id = #{device_id}
+   </delete>
+   <insert id="addDevice"  parameterType="com.dianxin.model.bo.Device">
+        <selectKey resultType="int" order="BEFORE" keyProperty="device_id">
+            select SEQ_DEVICE_ID.NEXTVAL as device_id from dual
+        </selectKey>
+        insert into t_device(device_id,
+											typeid,
+											name,
+											address,
+											longitude,
+											latitude,
+											topic,
+											imgs,
+											ss_id,
+											station_id,
+											update_id,
+											createdate,
+											updatedate,
+											status
+            ) values
+        				(#{device_id},
+                                            #{typeid},
+                                            #{name},
+                                            #{address},
+                                           #{longitude},
+                                            #{latitude},
+                                           #{topic},
+                                            #{imgs},
+                                            #{ss_id},
+                                            #{station_id},
+                                            #{update_id},
+                                          	#{createdate},
+                                          	#{updatedate},
+                                          	#{status}
+                                            )
+ 	 </insert>
+</mapper>

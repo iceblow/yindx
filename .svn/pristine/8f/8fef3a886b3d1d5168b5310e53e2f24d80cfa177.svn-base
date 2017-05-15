@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dianxin.dao.UserMapper" >
+  <resultMap id="BaseResultMap" type="com.dianxin.model.bo.User" >
+    <id column="id" property="id" jdbcType="INTEGER" />
+    <result column="username" property="username" jdbcType="VARCHAR" />
+    <result column="loginid" property="loginid" jdbcType="VARCHAR" />
+    <result column="password" property="password" jdbcType="VARCHAR" />
+    <result column="gender" property="gender" jdbcType="INTEGER" />
+    <result column="mobile" property="mobile" jdbcType="VARCHAR" />
+    <result column="phone" property="phone" jdbcType="VARCHAR" />
+    <result column="roleid" property="roleid" jdbcType="CHAR" javaType="string"/>
+    <result column="rolename" property="rolename" jdbcType="VARCHAR" />
+    <result column="viewgroupid" property="viewgroupid" jdbcType="INTEGER" />
+    <result column="deptid" property="deptid" jdbcType="INTEGER" />
+    <result column="deptname" property="deptname" jdbcType="VARCHAR" />
+    <result column="avatar" property="avatar" jdbcType="VARCHAR" />
+    <result column="score" property="score" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    a.id, a.loginid,a.username, ssuser.tsidecode(a.password) password, a.gender, a.mobile, a.phone, trim(a.roleid) roleid, a.rolename, a.deptid, a.deptname,b.avatar, nvl(b.score, 0) score
+  </sql>
+  <sql id="Base_Column_ListTo" >
+    a.id, a.loginid,a.username, ssuser.tsidecode(a.password) password, a.gender, a.mobile, a.phone, trim(a.roleid) roleid, a.rolename, a.deptid
+  </sql>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from VW_INTERFACE_AEFUSER a, t_user_exp b
+    where a.id = b.user_id(+) and  a.id = #{id,jdbcType=INTEGER}
+  </select>
+  <select id="selectByLoginid" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select 
+        <include refid="Base_Column_List" />
+    from VW_INTERFACE_AEFUSER a, t_user_exp b
+    where a.id = b.user_id(+) and (a.loginid = #{loginid,jdbcType=VARCHAR} or phone = #{loginid,jdbcType=VARCHAR})
+  </select>
+  <select id="selectByid" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+        <include refid="Base_Column_ListTo" />
+    from VW_INTERFACE_AEFUSER a
+    where id = #{loginid,jdbcType=INTEGER} 
+  </select>
+  
+  <select id="selectAllUser" resultMap="BaseResultMap" >
+    select 
+        distinct a.id,a.username
+    from VW_INTERFACE_AEFUSER a, t_user_exp b
+    order by  nlssort(a.username,'NLS_SORT=SCHINESE_PINYIN_M')
+    
+  </select>
+  <select id="selectUserForStation" resultMap="BaseResultMap" parameterType="java.lang.String" >
+    select user_id as id, username
+    from t_station_check
+    where station_id = #{station_id,jdbcType=VARCHAR}
+    order by seq
+  </select>
+  <select id="selectUserByDept" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+        <include refid="Base_Column_List" />
+        from VW_INTERFACE_AEFUSER a, t_user_exp b
+        where a.id = b.user_id(+) and a.deptid = #{deptid,jdbcType=INTEGER}
+  </select>
+  <select id="selectByName" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select 
+        <include refid="Base_Column_List" />
+    from VW_INTERFACE_AEFUSER a, t_user_exp b
+    where  a.id = b.user_id(+) and a.username= #{username,jdbcType=VARCHAR}
+        and (a.mobile = #{phone,jdbcType=VARCHAR} or a.phone=#{phone,jdbcType=VARCHAR})
+  </select>
+  
+  <select id="selectUserByName" resultMap="BaseResultMap" parameterType="java.util.Map" >
+    select 
+        <include refid="Base_Column_List" />
+    from VW_INTERFACE_AEFUSER a, t_user_exp b
+    where  a.id = b.user_id(+) and a.username= #{username,jdbcType=VARCHAR}
+        and (a.mobile = #{phone,jdbcType=VARCHAR} or a.phone=#{phone,jdbcType=VARCHAR})
+  </select>
+  <select id="getExpCountById" resultType="int" parameterType="java.lang.Integer" >
+    select count(*)
+    from  t_user_exp
+    where  user_id = #{id,jdbcType=INTEGER}
+  </select>
+  <insert id="insertExpUser" parameterType="java.util.Map" >
+    insert into t_user_exp
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        user_id,
+      </if>
+      <if test="avatar != null" >
+        avatar,
+      </if>
+      <if test="score != null" >
+        score,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="avatar != null" >
+        #{avatar,jdbcType=VARCHAR},
+      </if>
+      <if test="score != null" >
+        #{score,jdbcType=INTEGER},
+      </if>
+    </trim>
+  </insert>
+  <update id="updateUserPassword" parameterType="java.util.Map" >
+    update ssuser.AEF_USERS
+    set password = ssuser.tsiencode(#{password,jdbcType=VARCHAR})
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="updateUserAvatar" parameterType="java.util.Map" >
+    update t_user_exp
+    set avatar = #{avatar,jdbcType=VARCHAR}
+    where user_id = #{id,jdbcType=INTEGER}
+  </update>
+  <update id="addUserScore" parameterType="java.util.Map" >
+    update t_user_exp
+    set score = score + #{score,jdbcType=INTEGER}
+    where user_id = #{id,jdbcType=INTEGER}
+  </update>
+  <!-- 历史记录 -->
+  <select id="selectUserHistoryCount"  resultType="java.lang.Integer"  parameterType="java.lang.Integer">
+       select count(*)
+       from vm_user_history
+       where user_id = #{user_id,jdbcType=INTEGER}
+  </select>
+  <select id="pageQueryUserHistory" resultType="com.dianxin.model.vo.HistoryVo" parameterType="java.util.Map">
+    select * from (
+        select rownum as rn, a.* from (
+            select * from vm_user_history 
+            where user_id = #{user_id,jdbcType=INTEGER} 
+            order by createdate desc
+            ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select>
+   <!-- 统计 -->
+  <select id="selectRealStatistics"  resultType="java.lang.Integer"  parameterType="java.util.Map">
+       select count(*)
+       from t_real_exp t
+       where t.createdate between  #{start_time}  and #{end_time}
+       <if test="user_id != null" >
+            and t.user_id = #{user_id,jdbcType=INTEGER}
+       </if>
+       <if test="deptid != null" >
+            and t.user_id in 
+                (select a.id from VW_INTERFACE_AEFUSER a where a.deptid = #{deptid,jdbcType=INTEGER})
+       </if>
+  </select>
+  <select id="selectProblemOntime"  resultType="java.lang.Integer"  parameterType="java.util.Map">
+       select count(*)
+       from VM_PROBLEM_STATUS t
+       where t.laststep = 16 and t.status = 1
+        and  t.createdate between  #{start_time}  and #{end_time}
+       <if test="user_id != null" >
+            and t.owner_id = #{user_id,jdbcType=INTEGER}
+       </if>
+       <if test="deptid != null" >
+            and t.owner_id in 
+                (select a.id from VW_INTERFACE_AEFUSER a where a.deptid = #{deptid,jdbcType=INTEGER})
+       </if>
+  </select>
+  <select id="selectProblemOuttime"  resultType="java.lang.Integer"  parameterType="java.util.Map">
+       select count(*)
+       from VM_PROBLEM_STATUS t
+       where t.laststep = 16 and t.status = 0
+        and  t.createdate between  #{start_time}  and #{end_time}
+       <if test="user_id != null" >
+            and t.owner_id = #{user_id,jdbcType=INTEGER}
+       </if>
+       <if test="deptid != null" >
+            and t.owner_id in 
+                (select a.id from VW_INTERFACE_AEFUSER a where a.deptid = #{deptid,jdbcType=INTEGER})
+       </if>
+  </select>
+  <select id="selectRouteOntime"  resultType="java.lang.Integer"  parameterType="java.util.Map">
+       select count(*)
+       from vm_route_status t
+       where t.laststep = 13 and t.status = 1
+        and  t.createdate between  #{start_time}  and #{end_time}
+       <if test="user_id != null" >
+            and t.owner_id = #{user_id,jdbcType=INTEGER}
+       </if>
+       <if test="deptid != null" >
+            and t.owner_id in 
+                (select a.id from VW_INTERFACE_AEFUSER a where a.deptid = #{deptid,jdbcType=INTEGER})
+       </if>
+  </select>
+  <select id="selectRouteOuttime"  resultType="java.lang.Integer"  parameterType="java.util.Map">
+       select count(*)
+       from vm_route_status t
+       where t.laststep = 13 and t.status = 0
+        and  t.createdate between  #{start_time}  and #{end_time}
+       <if test="user_id != null" >
+            and t.owner_id = #{user_id,jdbcType=INTEGER}
+       </if>
+       <if test="deptid != null" >
+            and t.owner_id in 
+                (select a.id from VW_INTERFACE_AEFUSER a where a.deptid = #{deptid,jdbcType=INTEGER})
+       </if>
+  </select>
+  <select id="selectAlarmCount"  resultType="com.dianxin.model.vo.TimeCountVo"  parameterType="java.util.Map">
+       select to_char(a.createdate, 'yyyy-MM-dd') as time, count(*) as count
+		  from (select t.user_id, t.createdate
+		          from t_real_exp t
+		        union all
+		        select t.owner_id as user_id, t.createdate
+		          from t_problem t
+		         where t.laststep = 16
+		        union all
+		        select t.owner_id as user_id, t.createdate
+		          from t_route t
+		         where t.laststep = 13) a
+		 where a.createdate between  #{start_time}  and #{end_time}
+				  <if test="user_id != null" >
+			            and a.user_id = #{user_id,jdbcType=INTEGER}
+			       </if>
+			       <if test="deptid != null" >
+			            and a.user_id in 
+			                (select a.id from VW_INTERFACE_AEFUSER a where a.deptid = #{deptid,jdbcType=INTEGER})
+			       </if>
+		 group by to_char(a.createdate, 'yyyy-MM-dd')
+		 order by time
+  </select>
+  <!-- 地图分布 -->
+  <select id="selectAlarmForMap"  resultType="com.dianxin.model.vo.DistributionVo"  parameterType="java.util.Map">
+       select *
+  from (select 1           as type,
+               null        as user_id,
+               b.ADDRESS,
+               b.LONGITUDE,
+               b.LATITUDE,
+               a.aefid     as object_id
+          from VW_INTERFACE_AEFRECORD a, vm_station_location b
+         where a.isend = 0
+           and a.ISVALID = 1
+           and a.AESTATIONID = b.station_id
+           and not exists (select * from VW_INTERFACE_AEFRECORDFLOW c where c.laststep = 11 and c.recordid = a.aefid)
+           and (exists
+                (select *
+                   from VW_INTERFACE_PERSONINCHARGE c
+                  where a.AESTATIONID = c.station_id
+                    and a.ALARMTEMPLATEID = c.templateid
+                    and c.id = #{user_id,jdbcType=INTEGER}) or
+                a.AESTATIONID in
+                (select a.station_id
+                   from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+                  where a.viewgroupid = b.viewgroupid
+                    and b.id = #{user_id,jdbcType=INTEGER}))
+        union
+        select 2 as type,
+               a.OWNER_ID as user_id,
+               a.ADDRESS,
+               a.LONGITUDE,
+               a.LATITUDE,
+               to_char(a.route_id) as object_id
+          from vm_route_status a
+         where a.status in (1, 2, 3, 4) and a.laststep in (11,12)
+           and (a.owner_id = #{user_id,jdbcType=INTEGER} or
+               a.owner_id in (select c.user_id
+                                 from VW_INTERFACE_AEFVIEWGROUP a,
+                                      VW_INTERFACE_AEFUSER      b,
+                                      t_station_check           c
+                                where a.viewgroupid = b.viewgroupid
+                                  and a.station_id = c.station_id
+                                  and b.id = #{user_id,jdbcType=INTEGER}))
+        union
+        select 3 as type,
+               a.OWNER_ID as user_id,
+               a.ADDRESS,
+               a.LONGITUDE,
+               a.LATITUDE,
+               to_char(a.PROBLEM_ID) as object_id
+          from vm_problem_status a
+         where a.status in (1, 2, 3, 4) and a.isend = 0
+           and (a.owner_id = #{user_id,jdbcType=INTEGER} or
+               a.owner_id in (select c.user_id
+                                 from VW_INTERFACE_AEFVIEWGROUP a,
+                                      VW_INTERFACE_AEFUSER      b,
+                                      t_station_check           c
+                                where a.viewgroupid = b.viewgroupid
+                                  and a.station_id = c.station_id
+                                  and b.id = #{user_id,jdbcType=INTEGER}))) t
+ where t.LONGITUDE is not null
+   and t.LONGITUDE > 0
+   and t.LONGITUDE between #{longitude1,jdbcType=FLOAT} and #{longitude2,jdbcType=FLOAT}
+   and t.LATITUDE between #{latitude1,jdbcType=FLOAT} and #{latitude2,jdbcType=FLOAT}
+ order by t.LONGITUDE, t.LATITUDE
+  </select>
+</mapper>

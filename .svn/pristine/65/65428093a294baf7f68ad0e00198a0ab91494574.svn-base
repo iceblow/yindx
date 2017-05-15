@@ -1,0 +1,302 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>智慧安防管理平台</title>
+<link href="../css/foundation-datepicker.css" rel="stylesheet" type="text/css">
+<link rel="stylesheet" type="text/css" href="../css/common.css">
+</head>
+<body>
+	<div class="topNav">
+		<div class="title">
+			智慧安防管理平台
+		</div>
+<!-- 		<div class="inputBox"> -->
+<!-- 			<img src="../images/search220X32.png" class="back"> -->
+<!-- 			<img src="../images/icon_search.png" class="icon"> -->
+<!-- 			<div class="input" contenteditable="true">搜索告警名称</div> -->
+<!-- 		</div> -->
+		<div class="opration" id="oprations" style="cursor: pointer">
+			<img src="../images/icon_lgout.png">
+			安全退出
+		</div>
+		<div class="opration" id="oprations2" style="cursor: pointer">
+			<img src="../images/icon_password.png">
+			修改密码
+		</div>
+		<div class="opration">
+			<img src="../images/icon_yonghuming.png">
+			${ sessionScope.username}
+		</div>
+	</div>
+	<div class="leftNav">
+		<div class="opration">
+		<!-- 	<div>
+				<p class="pandect" id="pandect"><img src="../images/icon_zonglan.png" alt="">总览</p>
+			</div> -->
+			<div>
+				<p id="alertHandel">告警处理<img src="../images/icon_rightArrow.png" alt="" class="fanhui"></p>
+				<ul>
+					<li id="alertHandelActual">实时</li>
+					<li id="alertHandelAdvance">预警</li>
+					<li id="alertHandelInspection">巡检</li>
+					<li id="alertHandelDanger">隐患</li>
+					<li id="alertHandelCheck">检查</li>
+				</ul>
+			</div>
+			<div>
+				<p id="alertPublish">告警发布<img src="../images/icon_rightArrow.png" alt="" class="fanhui"></p>
+				<ul>
+					<li id="alertPublishInspection">巡检发布</li>
+					<li id="alertPublishDanger">隐患发布</li>
+					<li id="alertPublishReview">审核</li>
+					<li id="alertPublishCheck">检查发布</li>
+				</ul>
+			</div>
+			<div>
+				<p id="notice">公告管理<img src="../images/icon_rightArrow.png" alt="" class="fanhui"></p>
+				<ul>
+					<li id="noticeLookList">公告查看</li>
+					<li id="noticeSet">新建公告</li>
+				</ul>
+			</div>
+			<div>
+				<p id="user">用户管理<img src="../images/icon_rightArrow.png" alt="" class="fanhui"></p>
+				<ul>
+					<li id="userArea">辖区</li>
+				<!-- 	<li id="userU">用户</li>
+					<li id="userDepartment">部门</li> -->
+				</ul>
+			</div>
+			<div>
+				<p id="equipment">设备管理<img src="../images/icon_rightArrow.png" alt="" class="fanhui"></p>
+				<ul>
+					<li id="equipmentEquipment">设备查看</li>
+					<li id="equipmentTemplateList">模板设置</li>
+					
+				</ul>
+			</div>
+			<div>
+				<p id="query">查询统计<img src="../images/icon_rightArrow.png" alt="" class="fanhui"></p>
+				<ul>
+					<li id="queryConditions">条件查询</li>
+<!-- 					<li id="queryIntegral">积分查询</li> -->
+<!-- 					<li id="queryRelated">相关导出</li> -->
+				</ul>
+			</div>
+			<div>
+				<p id="systemSetup">系统设置<img src="../images/icon_rightArrow.png" alt="" class="fanhui"></p>
+				<ul>
+					<li id="systemSetupTime">告警计时</li>
+					<li id="systemSetupIntegral">积分设置</li>
+					<li id="systemSetuppassword">修改密码</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<script type="text/javascript" src="../js/jquery-1.11.1.min.js"></script>	
+	<script src="../js/common.js"></script>
+	<script src="../js/foundation-datepicker.js"></script>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			// p标签点击事件
+			$('.leftNav .opration p').click(function(event) {
+				if($(this).attr('id') == 'pandect'){
+					$(this).parent().siblings().find('ul').hide();
+					$('.leftNav .opration p .fanhui').attr('src','../images/icon_rightArrow.png');
+					$(this).addClass('active');
+					$('.leftNav .opration p').removeClass('activeP');
+					$('.pandect').find('img').attr('src','../images/icon_zonglan_white.png');
+				} else {
+					// 隐藏同级的ul
+					$(this).parent().siblings().find('ul').hide();
+					$('.leftNav .opration p .fanhui').attr('src','../images/icon_rightArrow.png');									
+					$('.opration p').removeClass('activeP');
+					$('.opration p').each(function(index,el) {
+						var srcn = 'url(../images/' + $(el).attr('id') + '_gray.png)';		
+						$(el).css('background',srcn);
+					});
+					$('.pandect').removeClass('active');
+					$('.pandect').find('img').attr('src','../images/icon_zonglan.png');
+					$('.pandect').css('background','#333C5B');
+					$('.pandect').css('border-left','0');
+					$('.pandect').css('padding-left','21px');
+					var src = 'url(../images/' + $(this).attr('id') + '_white.png)';		
+					$(this).css('background',src);
+					$(this).addClass('activeP');
+					if($(this).next('ul').css('display') == 'none'){
+						$(this).next('ul').show();
+						$(this).find('.fanhui').attr('src','../images/icon_xiaArrow.png');	
+						$(this).find('.fanhui').css('margin-top','22px');
+					} else {
+						$(this).next('ul').hide();
+						$(this).find('.fanhui').attr('src','../images/icon_rightArrow_white.png');
+						$(this).find('.fanhui').css('margin-top','19px');
+					}
+				} 
+				
+			});
+			
+			//鼠标上移修改图片
+			$('.opration p').mouseenter(function(e){
+				if($(this).attr('id') == 'pandect'){
+					$(this).find('img').attr('src','../images/icon_zonglan_white.png');
+					$(this).css('background','#273051');
+					$(this).css('border-left','4px solid #18C5BF');
+					$(this).css('padding-left','17px');
+				} else {
+					if(!$(this).hasClass('activeP')){
+						$(this).find('.fanhui').attr('src','../images/icon_rightArrow_white.png');
+						var src = 'url(../images/' + $(this).attr('id') + '_white.png)';		
+						$(this).css('background',src);
+					}
+				}		
+			});
+			
+			//鼠标移走修改图片
+			$('.opration p').mouseleave(function(e){
+				if($(this).attr('id') == 'pandect'){
+					if(!$(this).hasClass('active')){
+						$(this).find('img').attr('src','../images/icon_zonglan.png');
+						$(this).css('background','#333C5B');
+						$(this).css('border-left','0');
+						$(this).css('padding-left','21px');
+					}					
+				} else {
+					if(!$(this).hasClass('activeP')){
+						$(this).find('.fanhui').attr('src','../images/icon_rightArrow.png');
+						var src = 'url(../images/' + $(this).attr('id') + '_gray.png)';		
+						$(this).css('background',src);
+					}					
+				}	
+			});
+			
+			//搜索框获得焦点
+			$('.topNav .input').focusin(function() {
+				$(this).prevAll('.back').attr('src','../images/search_after220X32.png');	
+				$(this).prevAll('.icon').attr('src','../images/icon_search_after.png');				
+				$(this).text('');
+				$(this).css('color','#474747');
+			});
+			
+			//搜索框失去焦点
+			$('.topNav .input').focusout(function() {
+				$(this).prevAll('.back').attr('src','../images/search220X32.png');
+				$(this).prevAll('.icon').attr('src','../images/icon_search.png');
+				if($(this).text() == '') {					
+					$(this).text('搜索告警名称');						
+				} 
+				$(this).css('color','#c7d5e1');				
+			});		
+			
+			//导航高亮样式切换
+			$('.leftNav .opration ul li').click(function(e){
+				$('.leftNav .opration ul li').removeClass('active');
+				$(this).addClass('active');
+			});
+			//页面跳转
+			$('#pandect').click(function(){
+				location.href = server + '/dianxin/manage/pandect/pandect.jsp';
+			});
+			
+			$('#alertHandelActual').click(function(){
+				location.href = server + '/dianxin/alertHandel/actualList';
+			});
+			
+			$('#alertHandelAdvance').click(function(){
+				location.href = server + '/dianxin/alertHandel/advanceList';
+			});
+
+			$('#alertHandelInspection').click(function(){
+				location.href = server + '/dianxin/alertHandel/inspectionList';
+			});
+			
+			$('#alertHandelDanger').click(function(){
+				location.href = server + '/dianxin/alertHandel/dangerList';
+			});
+			
+			$('#alertHandelCheck').click(function(){
+				location.href = server + '/dianxin/alertHandel/checkList';
+			});			
+			
+			$('#alertPublishReview').click(function(){
+				location.href = server + '/dianxin/alertPublish/reviewList';
+			});	
+			
+			$('#alertPublishInspection').click(function(){
+				location.href = server + '/dianxin/alertPublish/inspectionList';
+			});	
+			
+			$('#alertPublishDanger').click(function(){
+				location.href = server + '/dianxin/alertPublish/danger';
+			});	
+			
+			$('#alertPublishCheck').click(function(){
+				location.href = server + '/dianxin/alertPublish/check';
+			});	
+			
+			$('#noticeLookList').click(function(){
+				location.href = server + '/dianxin/notice/lookList';
+			});	
+			
+			$('#noticeSet').click(function(){
+				location.href = server + '/dianxin/notice/addnotice';
+			});	
+			
+			$('#userArea').click(function(){
+				location.href = server + '/dianxin/user/userArea';
+			});	
+			
+			$('#userU').click(function(){
+				location.href = server + '/dianxin/manage/user/userList.jsp';
+			});	
+			
+			$('#userDepartment').click(function(){
+				location.href = server + '/dianxin/manage/user/department.jsp';
+			});	
+			
+			$('#queryConditions').click(function(){
+				location.href = server + '/dianxin/query/conditions';
+			});	
+			
+			$('#queryIntegral').click(function(){
+				location.href = server + '/dianxin/query/integral';
+			});	
+			
+			$('#queryRelated').click(function(){
+				location.href = server + '/dianxin/manage/query/related.jsp';
+			});	
+			
+			$('#systemSetupTime').click(function(){
+				location.href = server + '/dianxin/systemSetup/time';
+			});
+			
+			$('#systemSetupIntegral').click(function(){
+				location.href = server + '/dianxin/systemSetup/integral';
+			});
+			
+			$('#systemSetuppassword').click(function(){
+				location.href = server + '/dianxin/systemSetup/password';
+			});	
+			
+			$('#equipmentTemplateList').click(function(){
+				location.href = server + '/dianxin/equipment/templateList';
+			});
+			
+			$('#equipmentEquipment').click(function(){
+				location.href = server + '/dianxin/equipment/equipment';
+			});
+			$('#oprations').click(function(){
+				location.href = server + '/dianxin/manage/logout';
+			});
+			$('#oprations2').click(function(){
+				location.href = server + '/dianxin/systemSetup/password';
+			});
+			
+			
+		});
+	</script>
+</body>
+</html>

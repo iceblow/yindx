@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dianxin.dao.ProblemMapper" >
+  <resultMap id="BaseResultMap" type="com.dianxin.model.bo.Problem" >
+    <id column="problem_id" property="problem_id" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="topic" property="topic" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="TIMESTAMP"/>
+	<result column="updatedate" property="updatedate" jdbcType="TIMESTAMP"/>
+	<result column="laststep" property="laststep" jdbcType="INTEGER" />
+	<result column="isend" property="isend" jdbcType="INTEGER" />
+	<result column="suspenddate" property="suspenddate" jdbcType="TIMESTAMP" />
+	<result column="address" property="address" jdbcType="VARCHAR" />
+	<result column="longitude" property="longitude" jdbcType="FLOAT" />
+	<result column="latitude" property="latitude" jdbcType="FLOAT" />
+	<result column="owner_id" property="owner_id" jdbcType="INTEGER" />
+	<result column="receivetime" property="receivetime" jdbcType="INTEGER" />
+	<result column="resolvetime" property="resolvetime" jdbcType="INTEGER" />
+    <result column="suspendtime" property="suspendtime" jdbcType="INTEGER" />
+    <result column="receivestart" property="receivestart" jdbcType="TIMESTAMP" />
+    <result column="resolvestart" property="resolvestart" jdbcType="TIMESTAMP" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="MutliResultMap" type="com.dianxin.model.bo.ProblemMutli" >
+    <id column="problem_mutli_id" property="problem_mutli_id" jdbcType="INTEGER" />
+    <result column="problem_id" property="problem_id" jdbcType="INTEGER" />
+    <result column="mediaType" property="mediaType" jdbcType="INTEGER" />
+    <result column="fileExt" property="fileExt" jdbcType="VARCHAR" />
+    <result column="fileUrl" property="fileUrl" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="TIMESTAMP"  javaType="java.util.Date"/>
+  </resultMap>
+  <resultMap id="FlowResultMap" type="com.dianxin.model.bo.ProblemFlow" >
+    <id column="problem_flow_id" property="problem_flow_id" jdbcType="INTEGER" />
+    <result column="problem_id" property="problem_id" jdbcType="INTEGER" />
+    <result column="holderid" property="holderid" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="TIMESTAMP"  javaType="java.util.Date"/>
+    <result column="createcontent" property="createcontent" jdbcType="VARCHAR" />
+    <result column="isrecordfile" property="isrecordfile" jdbcType="INTEGER" />
+    <result column="imgs" property="imgs" jdbcType="VARCHAR" />
+    <result column="audio" property="audio" jdbcType="VARCHAR" />
+    <result column="score" property="score" jdbcType="INTEGER" />
+    <result column="username" property="username" jdbcType="VARCHAR" />
+    <result column="full_deptname" property="full_deptname" jdbcType="VARCHAR" />
+  </resultMap> 
+  <resultMap id="BaseVoResultMap" type="com.dianxin.model.vo.ProblemVo" >
+    <id column="problem_id" property="problem_id" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="topic" property="topic" jdbcType="VARCHAR" />
+    <result column="createdate" property="createdate" jdbcType="TIMESTAMP" />
+    <result column="updatedate" property="updatedate" jdbcType="TIMESTAMP" />
+    <result column="laststep" property="laststep" jdbcType="INTEGER" />
+    <result column="isend" property="isend" jdbcType="INTEGER" />
+    <result column="suspenddate" property="suspenddate" jdbcType="TIMESTAMP" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="longitude" property="longitude" jdbcType="FLOAT" />
+    <result column="latitude" property="latitude" jdbcType="FLOAT" />
+    <result column="owner_id" property="owner_id" jdbcType="INTEGER" />
+    <result column="receivetime" property="receivetime" jdbcType="INTEGER" />
+    <result column="resolvetime" property="resolvetime" jdbcType="INTEGER" />
+    <result column="suspendtime" property="suspendtime" jdbcType="INTEGER" />
+    <result column="receivestart" property="receivestart" jdbcType="TIMESTAMP" />
+    <result column="resolvestart" property="resolvestart" jdbcType="TIMESTAMP" />
+    <result column="status" property="status" jdbcType="INTEGER" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    problem_id, title, topic, createdate, updatedate, creator, laststep, isend, suspenddate, address, 
+    longitude, latitude, owner_id, receivetime, resolvetime,suspendtime,receivestart,resolvestart
+  </sql>
+  <select id="selectProblemById"  resultMap="BaseResultMap"  parameterType="java.lang.Integer">
+       select t.*,
+                     case
+                     when t.laststep in (10, 13, 16) then
+                      0
+                     when t.laststep in (11, 151) then
+                      decode(sign(round(to_number(t.receivestart - sysdate) * 24 * 60 * 60) +
+                                  t.receivetime * 60),
+                             -1,
+                             1,
+                             0,
+                             2,
+                             1,
+                             2)
+                     else
+                      decode(sign(round(to_number(t.resolvestart - sysdate) * 24 * 60 * 60) +
+                                  t.resolvetime * 60 * 60 + t.suspendtime * 60),
+                             -1,
+                             3,
+                             0,
+                             4,
+                             1,
+                             4)
+                    end as status
+       from t_problem t
+       where t.problem_id = #{problem_id,jdbcType=INTEGER}
+  </select>
+  <select id="selectProblemMutli"  resultMap="MutliResultMap"  parameterType="java.lang.Integer">
+       select  problem_multi_id, problem_id, mediatype, fileext, fileurl, createdate
+       from t_problem_multi
+       where problem_id = #{problem_id,jdbcType=INTEGER} 
+  </select>
+  <select id="selectCountNotEnd"  resultType="java.lang.Integer"  parameterType="java.lang.Integer">
+       select count(*)
+       from t_problem
+       where owner_id = #{user_id,jdbcType=INTEGER} and isend = 0  
+  </select>
+  <select id="pageQueryNotEnd" resultMap="BaseVoResultMap" parameterType="java.util.Map">
+    select * from (
+        select rownum as rn, a.* from (
+        select t.*,
+			         case
+			         when t.laststep in (10, 13, 16) then
+			          0
+			         when t.laststep in (11, 151) then
+			          decode(sign(round(to_number(t.receivestart - sysdate) * 24 * 60 * 60) +
+			                      t.receivetime * 60),
+			                 -1,
+			                 1,
+			                 0,
+			                 2,
+			                 1,
+			                 2)
+			         else
+			          decode(sign(round(to_number(t.resolvestart - sysdate) * 24 * 60 * 60) +
+			                      t.resolvetime * 60 * 60 + t.suspendtime * 60),
+			                 -1,
+			                 3,
+			                 0,
+			                 4,
+			                 1,
+			                 4)
+                    end as status
+  from t_problem t where
+        t.owner_id = #{user_id,jdbcType=INTEGER} and t.isend = 0
+         order by status, t.createdate
+            ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select>
+  <insert id="addProblem" parameterType="com.dianxin.model.bo.Problem">
+        <selectKey resultType="int" order="BEFORE" keyProperty="problem_id">
+            select SEQ_PROBLEM_ID.NEXTVAL as problem_id from dual
+        </selectKey>
+        INSERT
+        INTO t_problem
+        (
+        problem_id, creator, laststep, isend, address, longitude, latitude
+        <if test="title != null" > ,title</if>
+        <if test="topic != null" > ,topic</if>
+        <if test="owner_id != null" > ,owner_id</if>
+        <if test="receivetime != null" > ,receivetime</if>
+        <if test="resolvetime != null" > ,resolvetime</if>
+        <if test="laststep == 11" > ,receivestart</if>
+        )
+        VALUES
+        (
+        #{problem_id},
+        #{creator},
+        #{laststep},
+        #{isend},
+        #{address},
+        #{longitude},
+        #{latitude}
+        <if test="title != null" > ,#{title,jdbcType=VARCHAR}</if>
+        <if test="topic != null" > ,#{topic,jdbcType=VARCHAR}</if>
+        <if test="owner_id != null" > ,#{owner_id}</if>
+        <if test="receivetime != null" > ,#{receivetime}</if>
+        <if test="resolvetime != null" > ,#{resolvetime}</if>
+        <if test="laststep == 11" > ,sysdate</if>
+        )
+    </insert>
+    <insert id="addProblemMulti" parameterType="com.dianxin.model.bo.ProblemMutli">
+        INSERT INTO t_problem_multi
+        (
+            problem_multi_id, problem_id, mediatype, fileext, fileurl
+        )
+        VALUES
+        (
+        SEQ_PROBLEM_MULTI_ID.NEXTVAL,
+        #{problem_id},
+        #{mediaType},
+        #{fileExt},
+        #{fileUrl}
+        )
+    </insert>
+    <select id="pageQuery" resultMap="BaseResultMap" parameterType="java.util.Map">
+    select * from (
+        select rownum as rn, a.* from (
+        select t.*
+  from t_problem t
+        <where> 
+        1 = 1
+    <if test="area_id != null ">
+        and t.owner_id in(select 
+        c.id
+        from VW_INTERFACE_AEFUSER c
+        where c.deptid in( select e.DEPTID
+    from VW_INTERFACE_AEFDEPARTMENT e
+    where deptstatus = 0 and DEPTLEVEL = 2
+    and PARENTDEPTID = #{area_id}))
+    </if> 
+    <if test="station_id != null">
+         and t.owner_id in(select 
+        c.id
+        from VW_INTERFACE_AEFUSER c
+        where c.deptid = #{station_id})
+    </if> 
+    <if test="user_id != null" >and t.owner_id=#{user_id}</if>
+　  <if test="start_date != null and start_date.length()>0">
+                <![CDATA[and to_char(t.createdate,'yyyy-MM-dd') >= #{start_date}]]></if>
+     <if test="end_date != null and end_date.length()>0">
+        <![CDATA[and to_char(t.createdate,'yyyy-MM-dd') <= #{end_date}]]></if>
+     <if test="step != null" >and t.laststep=#{step}</if>
+     <if test="user_id != null"> and t.owner_id = #{user_id}</if>
+  </where>
+  			order by t.createdate desc, t.laststep
+            ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select>
+  <select id="getPageQueryCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+    select count(*)
+  from t_problem t
+  <where> 
+  	1 = 1
+     <if test="area_id != null ">
+         and t.owner_id in(select 
+        c.id
+        from VW_INTERFACE_AEFUSER c
+        where c.deptid in( select e.DEPTID
+    from VW_INTERFACE_AEFDEPARTMENT e
+    where deptstatus = 0 and DEPTLEVEL = 2
+    and PARENTDEPTID = #{area_id}))
+    </if> 
+    <if test="station_id != null">
+         and t.owner_id in(select 
+        c.id
+        from VW_INTERFACE_AEFUSER c
+        where c.deptid = #{station_id})
+    </if> 
+    <if test="user_id != null" >and t.owner_id=#{user_id}</if>
+　  <if test="start_date != null and start_date.length()>0">
+                <![CDATA[and to_char(t.createdate,'yyyy-MM-dd') >= #{start_date}]]></if>
+     <if test="end_date != null and end_date.length()>0">
+        <![CDATA[and to_char(t.createdate,'yyyy-MM-dd') <= #{end_date}]]></if>
+     <if test="step != null" >and t.laststep=#{step}</if>
+     <if test="user_id != null"> and t.owner_id = #{user_id}</if>
+  </where>
+  </select>
+  <!-- 隐患流程 -->
+  <select id="selectProblemFlow"  resultMap="FlowResultMap"  parameterType="java.lang.Integer">
+       select a.problem_flow_id, a.problem_id, a.laststep, a.holderid, 
+       		  a.createtime, a.createcontent, a.isrecordfile, 
+       		  a.imgs, a.audio, a.score, b.username, d.deptname || '_' || c.deptname as full_deptname
+       from t_problem_flow a, VW_INTERFACE_AEFUSER b, VW_INTERFACE_AEFDEPARTMENT c, VW_INTERFACE_AEFDEPARTMENT d
+       where a.holderid = b.id
+         and b.deptid = c.deptid
+         and c.parentdeptid = d.deptid
+         and a.problem_id = #{problem_id,jdbcType=INTEGER}
+       order by a.createtime
+  </select>
+  <insert id="addProblemFlow" parameterType="com.dianxin.model.bo.ProblemFlow">
+        INSERT INTO t_problem_flow
+        (
+            problem_flow_id, problem_id, laststep, holderid
+            <if test="createcontent != null" >
+            , createcontent
+        </if>
+        <if test="isrecordfile != null" >
+            , isrecordfile
+        </if>
+        <if test="imgs != null" >
+            , imgs
+        </if>
+        <if test="audio != null" >
+            , audio
+        </if>, score
+        )
+        VALUES
+        (
+        SEQ_PROBLEM_FLOW_ID.NEXTVAL,
+        #{problem_id},
+        #{laststep},
+        #{holderid},
+        <if test="createcontent != null" >
+            #{createcontent},
+        </if>
+        <if test="isrecordfile != null" >
+            #{isrecordfile},
+        </if>
+        <if test="imgs != null" >
+            #{imgs},
+        </if>
+        <if test="audio != null" >
+            #{audio},
+        </if>
+        #{score}
+        )
+    </insert>
+    <update id="updateProblemStep" parameterType="java.util.Map">
+        update t_problem
+        set laststep = #{laststep},
+        <if test="laststep == 12" > 
+            receivestart = sysdate,
+        </if>
+        <if test="laststep == 121" > 
+            resolvestart = sysdate,
+        </if>
+        <if test="laststep == 141 and  suspendtime != null" >
+            suspenddate = sysdate+numtodsinterval(#{suspendtime},'minute'),
+            suspendtime = suspendtime + #{suspendtime},
+        </if>
+        <if test="laststep == 13" >
+        	isend = 1,
+      	</if>
+        <if test="laststep == 16" >
+        	isend = 1,
+      	</if>
+        <if test="laststep == 151" >
+            receivestart = sysdate,
+            suspendtime = 0,
+        </if>
+        <if test="owner_id != null" >
+        	owner_id = #{owner_id},
+      	</if>
+        	updatedate = sysdate
+        where problem_id = #{problem_id}
+    </update>
+    
+    <!-- 审核列表 -->
+    <select id="pageReviewList" resultMap="BaseResultMap" parameterType="java.util.Map">
+    select * from (
+        select rownum as rn, a.* from (
+        select t.*
+  from t_problem t
+        <where> 
+        t.laststep in (10,14,15)
+    <if test="area_id != null and area_id.length()>0 ">
+         and t.owner_id in(select a.id from VW_INTERFACE_PERSONINCHARGE a where a.station_id like #{area_id} || '%')
+    </if> 
+    <if test="station_id != null and station_id.length()>0 ">
+         and t.owner_id in(select a.id from VW_INTERFACE_PERSONINCHARGE a where a.station_id = #{station_id})
+    </if> 
+    <if test="user_id != null" >and t.owner_id=#{user_id}</if>
+　  <if test="start_date != null and start_date.length()>0">
+                <![CDATA[and to_char(t.createdate,'yyyy-MM-dd') >= #{start_date}]]></if>
+     <if test="end_date != null and end_date.length()>0">
+        <![CDATA[and to_char(t.createdate,'yyyy-MM-dd') <= #{end_date}]]></if>
+     <if test="step != null" >and t.laststep=#{step}</if>
+  </where>
+  		order by t.createdate desc,t.laststep desc, t.createdate asc
+            ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select>
+  <select id="getPageReviewListCount" resultType="java.lang.Integer" parameterType="java.util.Map">
+    select count(*)
+  from t_problem t
+  <where> 
+  	t.laststep in (10,14,15)
+    <if test="area_id != null and area_id.length()>0 ">
+         and t.owner_id in(select a.id from VW_INTERFACE_PERSONINCHARGE a where a.station_id like #{area_id} || '%')
+    </if> 
+    <if test="station_id != null and station_id.length()>0 ">
+         and t.owner_id in(select a.id from VW_INTERFACE_PERSONINCHARGE a where a.station_id = #{station_id})
+    </if> 
+    <if test="user_id != null" >and t.owner_id=#{user_id}</if>
+　  <if test="start_date != null and start_date.length()>0">
+                <![CDATA[and to_char(t.createdate,'yyyy-MM-dd') >= #{start_date}]]></if>
+     <if test="end_date != null and end_date.length()>0">
+        <![CDATA[and to_char(t.createdate,'yyyy-MM-dd') <= #{end_date}]]></if>
+     <if test="step != null" >and t.laststep=#{step}</if>
+  </where>
+  </select>
+  <update id="updateProblemTime" parameterType="com.dianxin.model.bo.Problem">
+   update t_problem 
+   set
+    laststep = #{laststep},
+    receivetime = #{receivetime} ,
+   resolvetime = #{resolvetime} 
+   where problem_id = #{problem_id}
+  </update>
+</mapper>

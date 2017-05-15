@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dianxin.dao.EwRemindMapper" >
+  <resultMap id="DeviceResultMap" type="com.dianxin.model.bo.EwDevice" >
+    <result column="type" property="type" />
+    <result column="overdate" property="overdate" jdbcType="TIMESTAMP" />
+    <result column="info" property="info" jdbcType="VARCHAR" />
+    <result column="devicename_ex" property="devicename_ex" jdbcType="VARCHAR" />
+    <result column="place" property="place" jdbcType="VARCHAR" />
+    <result column="uuid" property="uuid" jdbcType="VARCHAR" />
+  </resultMap>
+  <select id="selectTotalByUserId" resultType="java.lang.Integer"  parameterType="java.lang.Integer">
+  select t1.count + t2.count + t3.count + t4.count as count
+    from
+  (select count(*) count
+  from VW_INTERFACE_AEFDEVICE_EW c, VW_INTERFACE_AEFDEVICE d
+ where c.DEVICEID = d.device_id
+   and c.UUID = d.uuid
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+           ) t1,
+  (select count(*) count
+  from VW_INTERFACE_FIREDETECTORS_EW c, VW_INTERFACE_AEFFIREDETECTORS d
+ where c.id = d.id
+   and c.UUID = d.uuid
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+           ) t2,
+  (select count(*) count
+  from VW_INTERFACE_AEFNONMONITOR_EW c, VW_INTERFACE_AEFNONMONITOR d,VW_INTERFACE_AEFFLOOR e
+ where c.id = d.id
+   and c.UUID = d.uuid
+   and d.floor_id = e.FLOOR_ID
+   and e.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+   ) t3,
+ (select count(*) count
+  from VW_INTERFACE_ENVDETECTORS_EW c, VW_INTERFACE_AEFENVDETECTORS d
+ where c.id = d.id
+   and c.UUID = d.uuid
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+           ) t4
+  </select>
+  <select id="pageQueryByUserId" resultMap="DeviceResultMap" parameterType="java.util.Map">
+    select * from (
+        select rownum as rn, t.* from (
+    (select 1 as type, c.OVERDATE, c.INFO, c.DEVICENAME_EX, '' as place, c.UUID
+  from VW_INTERFACE_AEFDEVICE_EW c, VW_INTERFACE_AEFDEVICE d
+ where c.DEVICEID = d.device_id
+   and c.UUID = d.uuid
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+    ) union all (
+    select 2 as type, c.OVERDATE, c.INFO, c.DETECTORNAME_EX as DEVICENAME_EX, c.place, c.UUID
+  from VW_INTERFACE_FIREDETECTORS_EW c, VW_INTERFACE_AEFFIREDETECTORS d
+ where c.id = d.id
+   and c.UUID = d.uuid
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+    ) union all  (
+    select 3 as type, c.OVERDATE, c.INFO, c.DEVICENAME_EX, c.place, c.UUID
+  from VW_INTERFACE_AEFNONMONITOR_EW c, VW_INTERFACE_AEFNONMONITOR d,VW_INTERFACE_AEFFLOOR e
+ where c.id = d.id
+   and c.UUID = d.uuid
+   and d.floor_id = e.FLOOR_ID
+   and e.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+     ) union all  (
+     select 4 as type, c.OVERDATE, c.INFO, c.DETECTORNAME_EX as DEVICENAME_EX, c.place, c.UUID
+  from VW_INTERFACE_ENVDETECTORS_EW c, VW_INTERFACE_AEFENVDETECTORS d
+ where c.id = d.id
+   and c.UUID = d.uuid
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+     )
+    ) t  ) r
+    <![CDATA[where r.rn >= #{startIndex,jdbcType=INTEGER} and r.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select>
+  <select id="selectTotal" resultType="java.lang.Integer">
+  	select a.count + b.count + c.count + b.count as count
+  	from
+    (select count(*) as count from VW_INTERFACE_AEFDEVICE_EW) a,
+    (select count(*) as count from VW_INTERFACE_FIREDETECTORS_EW) b,
+    (select count(*) as count from VW_INTERFACE_AEFNONMONITOR_EW) c,
+    (select count(*) as count from VW_INTERFACE_ENVDETECTORS_EW) d
+  </select>
+  <select id="pageQuery" resultMap="DeviceResultMap" parameterType="java.util.Map">
+  	select * from (
+        select rownum as rn, t.* from (
+  	(select 1 as type, a.OVERDATE, a.INFO, a.DEVICENAME_EX, '' as place, a.UUID from VW_INTERFACE_AEFDEVICE_EW a) union all
+    (select 2 as type, b.OVERDATE, b.INFO, b.DETECTORNAME_EX as DEVICENAME_EX, b.place, b.UUID from VW_INTERFACE_FIREDETECTORS_EW b) union all
+    (select 3 as type, c.OVERDATE, c.INFO, c.DEVICENAME_EX, c.place, c.UUID from VW_INTERFACE_AEFNONMONITOR_EW c) union all
+    (select 4 as type, d.OVERDATE, d.INFO, d.DETECTORNAME_EX as DEVICENAME_EX, d.place, d.UUID from VW_INTERFACE_ENVDETECTORS_EW d)
+    ) t  ) r
+    <![CDATA[where r.rn >= #{startIndex,jdbcType=INTEGER} and r.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select>
+  <resultMap id="DetailResultMap" type="com.dianxin.model.bo.Floor" >
+    <result column="floor_id" property="floor_id" jdbcType="VARCHAR" />
+    <result column="fd_posx" property="fd_posx" jdbcType="FLOAT" />
+    <result column="fd_posy" property="fd_posy" jdbcType="FLOAT" />
+    <result column="map" property="map" jdbcType="BLOB" />
+  </resultMap>
+  <select id="selectFiredetectors" resultMap="DetailResultMap" parameterType="java.lang.String">
+     select a.floor_id, a.fd_posx, a.fd_posy, b.map from VW_INTERFACE_AEFFIREDETECTORS a, VW_INTERFACE_AEFFLOOR b 
+     where a.floor_id = b.floor_id(+) and a.uuid = #{uuid}
+  </select>
+  <select id="selectNonmonitor" resultMap="DetailResultMap" parameterType="java.lang.String">
+     select a.floor_id, a.fd_posx, a.fd_posy, b.map from VW_INTERFACE_AEFNONMONITOR a, VW_INTERFACE_AEFFLOOR b 
+  where a.floor_id = b.floor_id(+) and a.uuid = #{uuid}
+  </select>
+  <select id="selectEnvdetectors" resultMap="DetailResultMap" parameterType="java.lang.String">
+     select a.floor_id, a.ed_posx fd_posx, a.ed_posy fd_posy, b.map from VW_INTERFACE_AEFENVDETECTORS a, VW_INTERFACE_AEFFLOOR b 
+  where a.floor_id = b.floor_id(+) and a.uuid = #{uuid}
+  </select>
+  
+  
+ <select id="queryList" resultMap="DeviceResultMap" parameterType="java.util.Map">
+    select * from (
+        select rownum as rn, t.* from (
+    (select 1 as type, c.OVERDATE, c.INFO, c.DEVICENAME_EX, '' as place, c.UUID
+  from VW_INTERFACE_AEFDEVICE_EW c, VW_INTERFACE_AEFDEVICE d
+ where c.DEVICEID = d.device_id
+   and c.UUID = d.uuid
+  <if test="user_id != null and user_id != ''">
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+    </if>
+     <if test="xiaoqu != null and xiaoqu != ''">
+     and d.station_id = #{xiaoqu} 
+     </if>
+      <if test="daqu != null and daqu != ''">
+      and d.station_id like #{daqu}
+      </if>
+      <if test="start_date != null and start_date != ''">
+      and #{start_date} &lt;= to_char(OVERDATE,'YYYY-MM-DD')
+      </if>
+      <if test="end_date != null and end_date != ''">
+     and to_char(OVERDATE,'YYYY-MM-DD') &lt;= #{end_date}
+      </if>
+       
+    ) union all (
+    select 2 as type, c.OVERDATE, c.INFO, c.DETECTORNAME_EX as DEVICENAME_EX, c.place, c.UUID
+  from VW_INTERFACE_FIREDETECTORS_EW c, VW_INTERFACE_AEFFIREDETECTORS d
+ where c.id = d.id
+   and c.UUID = d.uuid
+   <if test="user_id != null and user_id != ''">
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+    </if>
+     <if test="xiaoqu != null and xiaoqu != ''">
+     and d.station_id = #{xiaoqu} 
+     </if>
+      <if test="daqu != null and daqu != ''">
+      and d.station_id like #{daqu}
+      </if>
+      <if test="start_date != null and start_date != ''">
+      and #{start_date} &lt;= to_char(OVERDATE,'YYYY-MM-DD') 
+      </if>
+      <if test="end_date != null and end_date != ''">
+      and to_char(OVERDATE,'YYYY-MM-DD') &lt;= #{end_date}
+      </if>
+    ) union all  (
+    select 3 as type, c.OVERDATE, c.INFO, c.DEVICENAME_EX, c.place, c.UUID
+  from VW_INTERFACE_AEFNONMONITOR_EW c, VW_INTERFACE_AEFNONMONITOR d,VW_INTERFACE_AEFFLOOR e
+ where c.id = d.id
+   and c.UUID = d.uuid
+   and d.floor_id = e.FLOOR_ID
+   <if test="user_id != null and user_id != ''">
+   and e.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+    </if>
+    <if test="xiaoqu != null and xiaoqu != ''">
+     and e.station_id = #{xiaoqu} 
+     </if>
+      <if test="daqu != null and daqu != ''">
+      and e.station_id like #{daqu}
+      </if>
+      <if test="start_date != null and start_date != ''">
+      and #{start_date} &lt;= to_char(OVERDATE,'YYYY-MM-DD') 
+      </if>
+      <if test="end_date != null and end_date != ''">
+      and to_char(OVERDATE,'YYYY-MM-DD') &lt;= #{end_date}
+      </if>
+     ) union all  (
+     select 4 as type, c.OVERDATE, c.INFO, c.DETECTORNAME_EX as DEVICENAME_EX, c.place, c.UUID
+  from VW_INTERFACE_ENVDETECTORS_EW c, VW_INTERFACE_AEFENVDETECTORS d
+ where c.id = d.id
+   and c.UUID = d.uuid
+  <if test="user_id != null and user_id != ''">
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+    </if>
+  <if test="xiaoqu != null and xiaoqu != ''">
+     and d.station_id = #{xiaoqu} 
+     </if>
+      <if test="daqu != null and daqu != ''">
+      and d.station_id like #{daqu}
+      </if>
+      <if test="start_date != null and start_date != ''">
+      and #{start_date} &lt;= to_char(OVERDATE,'YYYY-MM-DD') 
+      </if>
+      <if test="end_date != null and end_date != ''">
+      and to_char(OVERDATE,'YYYY-MM-DD') &lt;= #{end_date}
+      </if>
+     )
+    ) t  order by OVERDATE desc) r
+    <![CDATA[where r.rn >= #{startIndex,jdbcType=INTEGER} and r.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select> 
+  
+  <select id="queryListCount" resultType="java.lang.Integer">
+  select t1.count + t2.count + t3.count + t4.count as count
+    from
+  (select count(*) count
+  from VW_INTERFACE_AEFDEVICE_EW c, VW_INTERFACE_AEFDEVICE d
+ where c.DEVICEID = d.device_id
+   and c.UUID = d.uuid
+   <if test="user_id != null and user_id != ''">
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+    </if>
+    <if test="xiaoqu != null and xiaoqu != ''">
+     and d.station_id = #{xiaoqu} 
+     </if>
+      <if test="daqu != null and daqu != ''">
+      and d.station_id like #{daqu}
+      </if>
+      <if test="start_date != null and start_date != ''">
+      and #{start_date} &lt;= to_char(OVERDATE,'YYYY-MM-DD')
+      </if>
+      <if test="end_date != null and end_date != ''">
+      and to_char(OVERDATE,'YYYY-MM-DD') &lt;= #{end_date}
+      </if>
+           ) t1,
+  (select count(*) count
+  from VW_INTERFACE_FIREDETECTORS_EW c, VW_INTERFACE_AEFFIREDETECTORS d
+ where c.id = d.id
+   and c.UUID = d.uuid
+   <if test="user_id != null and user_id != ''">
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+    </if>
+  <if test="xiaoqu != null and xiaoqu != ''">
+     and d.station_id = #{xiaoqu} 
+     </if>
+      <if test="daqu != null and daqu != ''">
+      and d.station_id like #{daqu}
+      </if>
+      <if test="start_date != null and start_date != ''">
+      and #{start_date} &lt;= to_char(OVERDATE,'YYYY-MM-DD')
+      </if>
+       <if test="end_date != null and end_date != ''">
+      and to_char(OVERDATE,'YYYY-MM-DD') &lt;= #{end_date}
+      </if>
+           ) t2,
+  (select count(*) count
+  from VW_INTERFACE_AEFNONMONITOR_EW c, VW_INTERFACE_AEFNONMONITOR d,VW_INTERFACE_AEFFLOOR e
+ where c.id = d.id
+   and c.UUID = d.uuid
+   and d.floor_id = e.FLOOR_ID
+  <if test="user_id != null and user_id != ''">
+   and e.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+    </if>
+  <if test="xiaoqu != null and xiaoqu != ''">
+     and e.station_id = #{xiaoqu} 
+     </if>
+      <if test="daqu != null and daqu != ''">
+      and e.station_id like #{daqu}
+      </if>
+      <if test="start_date != null and start_date != ''">
+      and #{start_date} &lt;= to_char(OVERDATE,'YYYY-MM-DD')
+      </if>
+       <if test="end_date != null and end_date != ''">
+      and to_char(OVERDATE,'YYYY-MM-DD') &lt;= #{end_date}
+      </if>
+   ) t3,
+ (select count(*) count
+  from VW_INTERFACE_ENVDETECTORS_EW c, VW_INTERFACE_AEFENVDETECTORS d
+ where c.id = d.id
+   and c.UUID = d.uuid
+   <if test="user_id != null and user_id != ''">
+   and d.station_id in
+        (select a.station_id
+          from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b
+         where a.viewgroupid = b.viewgroupid
+           and b.id = #{user_id,jdbcType=INTEGER})
+    </if>
+  <if test="xiaoqu != null and xiaoqu != ''">
+     and d.station_id = #{xiaoqu} 
+     </if>
+      <if test="daqu != null and daqu != ''">
+      and d.station_id like #{daqu}
+      </if>
+      <if test="start_date != null and start_date != ''">
+      and #{start_date} &lt;= to_char(OVERDATE,'YYYY-MM-DD')
+      </if>
+       <if test="end_date != null and end_date != ''">
+      and to_char(OVERDATE,'YYYY-MM-DD') &lt;= #{end_date}
+      </if>
+           ) t4
+  </select>
+  
+</mapper>

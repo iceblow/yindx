@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dianxin.dao.DeptMapper" >
+  <resultMap id="BaseResultMap" type="com.dianxin.model.bo.Dept" >
+    <id column="deptid" property="deptid" jdbcType="INTEGER" />
+    <result column="parentdeptid" property="parentdeptid" jdbcType="INTEGER" />
+    <result column="deptname" property="deptname" jdbcType="VARCHAR" />
+    <result column="deptlevel" property="deptlevel" jdbcType="INTEGER" />
+    <result column="deptfullname" property="deptfullname" jdbcType="VARCHAR" />
+  </resultMap>
+  <select id="selectDeptList" resultMap="BaseResultMap">
+    select deptid, parentdeptid,deptname,deptlevel,deptfullname
+    from VW_INTERFACE_AEFDEPARTMENT
+    where deptstatus = 0
+  </select>
+
+  <select id="selectDeptById" resultMap="BaseResultMap">
+    select deptid, parentdeptid,deptname,deptlevel,deptfullname
+    from VW_INTERFACE_AEFDEPARTMENT
+    where deptid = #{id}
+  </select>
+  
+  
+  <select id="selectUserDept" resultMap="BaseResultMap">
+    select a.deptid, a.parentdeptid,a.deptname,a.deptlevel,a.deptfullname
+    from VW_INTERFACE_AEFDEPARTMENT a, VW_INTERFACE_AEFUSER b
+    where a.deptstatus = 0 and a.deptid = b.deptid and b.id = #{userid}
+  </select>
+  
+  <select id="getChildDept" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    select deptid, parentdeptid,deptname,deptlevel,deptfullname
+    from VW_INTERFACE_AEFDEPARTMENT
+    where parentdeptid = #{id}
+  </select>
+  
+   <select id="selectDept1" resultMap="BaseResultMap">
+    select *
+    from VW_INTERFACE_AEFDEPARTMENT
+    where deptstatus = 0 and DEPTLEVEL = 1
+    order by nlssort(DEPTNAME,'NLS_SORT=SCHINESE_PINYIN_M')
+  </select>
+   <select id="selectDept2" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+    select *
+    from VW_INTERFACE_AEFDEPARTMENT
+    where deptstatus = 0 and DEPTLEVEL = 2
+    and PARENTDEPTID = #{deptid}
+    order by nlssort(DEPTNAME,'NLS_SORT=SCHINESE_PINYIN_M')
+  </select>
+  <select id="selectAllDept2" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+  	select *
+    from VW_INTERFACE_AEFDEPARTMENT
+    where deptstatus = 0 and DEPTLEVEL = 2
+    order by nlssort(DEPTNAME,'NLS_SORT=SCHINESE_PINYIN_M')
+  </select>
+</mapper>

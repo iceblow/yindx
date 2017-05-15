@@ -1,0 +1,17 @@
+#validationQuery=SELECT 1 FROM DUAL
+#jdbc.url=jdbc:oracle:thin:@10.18.4.111:1521:testdb
+#jdbc.url=jdbc:oracle:thin:@172.18.200.108:1521:ytyy
+#jdbc.username=sco
+#jdbc.password=ytyysco
+#jdbc.username=scotest
+#jdbc.password=test
+#validationQuery=SELECT 1 FROM DUAL
+#jdbc.url=jdbc:oracle:thin:@192.168.1.44:1521:ORCL
+#jdbc.username=yingte
+#jdbc.password=123456
+#uploadFilePath=D:\\excel\\
+validationQuery=SELECT 1 FROM DUAL
+driverClassName=oracle.jdbc.driver.OracleDriver
+jdbc.url=jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=134.98.255.249)(PORT = 1521)) (ADDRESS = (PROTOCOL = TCP)(HOST = 134.98.255.251)(PORT = 1521)) (LOAD_BALANCE = yes) ) (CONNECT_DATA = (SERVER = DEDICATED) (SERVICE_NAME = jkhnz) (FAILOVER_MODE = (TYPE = SELECT) (METHOD = BASIC)(RETRIES = 180)(DELAY = 5))) )
+jdbc.username=InterfaceUser
+jdbc.password=kd123456

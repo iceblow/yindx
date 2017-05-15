@@ -1,0 +1,144 @@
+@charset "utf-8";
+* {
+	padding:0;
+	margin:0;
+	font-family: "微软雅黑";
+}
+
+body,html {
+	height: 100%;
+	font-size: 14px;
+}
+
+.main {
+	width:100%;
+	height:100%;
+	position:relative;
+}
+
+.main .background{
+	width:100%;
+	height:100%;
+	position:absolute;
+	top:0;
+}
+
+.main .mainWrapper{
+	width:380px;
+	height:361px;
+	position:absolute;
+	top:24%;
+	left:50%;
+	margin-left:-190px;
+}
+
+.main .mainWrapper .title{
+	width:380px;
+	height:42px;
+	position:absolute;
+	top:0;
+	left:0px;
+	font-size:38px;
+	font-family:"幼圆";
+	color:#3F3D3D;
+}
+
+.main .mainWrapper .loginBox{
+	width:349px;
+	height:282px;
+	position:absolute;
+	top:90px;
+	left:16px;
+	font-size:14px;
+	color:#777;
+	background:url(../images/login_backg.png);
+}
+
+.main .mainWrapper .inputBox{
+	width:270px;
+	height:40px;
+	position:absolute;
+	top:42px;
+	left:38px;
+	color:#c3c3c3;
+	border:1px solid #E8E8E8;
+}
+
+.main .mainWrapper .inputBoxBottom{
+	top:100px;
+}
+
+.main .mainWrapper .icon{
+	position:absolute;
+	top:10px;
+	left:16px;
+}
+
+.main .mainWrapper .line{
+	position:absolute;
+	top:6px;
+	left:48px;
+}
+
+.main .mainWrapper .ipt{
+	float:right;
+    width: 207px;
+    height: 40px;
+    line-height:40px;
+    border: none;
+	color:#c3c3c3;
+	padding-left:13px;
+}
+
+.main .mainWrapper .ipt:focus{
+	outline:none;
+}
+
+.main .mainWrapper .spanholder {
+	position: absolute;
+	bottom: 0px;
+	right: 0px;	
+	width:220px;
+	padding-left:13px;
+	box-sizing:border-box;
+	height:40px;
+	line-height: 40px;
+   	color:#c3c3c3;
+}
+
+.main .loginBox .rememberBox{
+	position: absolute;
+	top:156px;
+	left:38px;
+	width:270px;
+	height:17px;
+	line-height:17px;
+	color:#777;
+}
+
+.main .loginBox .rememberBox .normalP{
+	float:left;
+	width:17px;
+	height:17px;
+	margin-right:10px;
+	cursor:pointer;
+}
+
+.main .loginBox .rememberBox .forget{
+	float:right;
+	height:17px;
+	line-height:17px;
+	cursor:pointer;
+}
+
+.main .loginBox .loginBtn{
+	position: absolute;
+	top:206px;
+	left:38px;
+	width:270px;
+	height:40px;
+	line-height:40px;
+	color:#fff;
+	background:#18C7BF;
+	text-align:center;
+}

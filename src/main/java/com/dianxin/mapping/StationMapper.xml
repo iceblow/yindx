@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dianxin.dao.StationMapper" >
+  <resultMap id="AreaResultMap" type="com.dianxin.model.bo.Area" >
+    <result column="ss_id" property="area_id" jdbcType="CHAR" />
+    <result column="ss_name" property="area_name" jdbcType="VARCHAR" />
+  </resultMap>
+  <resultMap id="StationResultMap" type="com.dianxin.model.bo.Station" >
+    <result column="station_id" property="station_id" jdbcType="CHAR" />
+    <result column="station_name" property="station_name" jdbcType="VARCHAR" />
+    <result column="longitude" property="longitude" jdbcType="FLOAT" />
+    <result column="latitude" property="latitude" jdbcType="FLOAT" />
+    <result column="address" property="address" jdbcType="VARCHAR" />
+    <result column="loctype" property="loctype" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="StationRangeResultMap" type="com.dianxin.model.bo.StationRange" >
+    <result column="station_id" property="station_id" jdbcType="CHAR" />
+    <result column="station_name" property="station_name" jdbcType="VARCHAR" />
+	<result column="longitude" property="longitude" jdbcType="FLOAT" />
+	<result column="latitude" property="latitude" jdbcType="FLOAT" />
+  </resultMap>
+  <resultMap id="StationCheckResultMap" type="com.dianxin.model.bo.StationCheck" >
+    <result column="station_id" property="station_id" jdbcType="CHAR" />
+    <result column="station_name" property="station_name" jdbcType="VARCHAR" />
+	<result column="user_id" property="user_id" jdbcType="CHAR" />
+	<result column="user_name" property="user_name" jdbcType="VARCHAR" />
+	<result column="seq" property="seq" jdbcType="VARCHAR" />
+  </resultMap>
+  <select id="selectAreaList" resultMap="AreaResultMap" parameterType="java.lang.Integer" >
+        select a.ss_id, a.ss_name 
+        from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b 
+        where a.viewgroupid = b.viewgroupid and b.id = #{user_id,jdbcType=INTEGER}
+        group by ss_id,ss_name
+  </select>
+  <select id="selectStationList" resultMap="StationResultMap" parameterType="java.util.Map" >
+        select a.station_id, a.station_name 
+            from VW_INTERFACE_AEFVIEWGROUP a, VW_INTERFACE_AEFUSER b 
+        where a.viewgroupid = b.viewgroupid and b.id = #{user_id,jdbcType=INTEGER}
+                 and a.ss_id =  #{area_id,jdbcType=VARCHAR}
+  </select>
+  <select id="selectStationRangeStaion" resultMap="StationResultMap">
+        select station_id, station_name
+        from t_station_range
+        group by station_id, station_name
+  </select>
+  <select id="selectStationRangeList" resultMap="StationRangeResultMap" parameterType="java.lang.String" >
+        select station_id, station_name, longitude, latitude
+        from t_station_range
+        <if test="_parameter != null" >
+        	where station_id = #{station_id,jdbcType=VARCHAR}
+      	</if>
+        order by id
+  </select>
+  
+  <select id="selectAllAreaList" resultMap="AreaResultMap">
+        select ss_id, ss_name 
+        from VW_INTERFACE_AEFSTATION
+        group by ss_id,ss_name
+        order by nlssort(ss_name,'NLS_SORT=SCHINESE_PINYIN_M')
+  </select>
+  
+  <select id="selectAllStationList" resultMap="StationResultMap">
+        select station_id, station_name 
+        from VW_INTERFACE_AEFSTATION
+        where ss_id =  #{area_id,jdbcType=VARCHAR}
+        group by station_id,station_name
+  </select>
+  
+   <select id="selectAllStation" resultMap="StationResultMap">
+        select station_id, station_name 
+        from VW_INTERFACE_AEFVIEWGROUP
+        group by station_id,station_name
+  </select>
+  
+  <insert id="insertStationLocation"  parameterType="com.dianxin.model.bo.Station">
+        insert into T_STATION_LOCATION(station_id, longitude, latitude, address) 
+        values (#{station_id}, #{longitude}, #{latitude}, #{address} )
+  </insert>
+  <select id="selectStationLocation" resultMap="StationResultMap" parameterType="java.lang.String" >
+        select station_id, station_name, longitude, latitude,loctype, address
+        from VM_STATION_LOCATION
+         where station_id = #{station_id,jdbcType=VARCHAR}
+  </select>
+  
+  <select id="getAllStationRangeId" resultType="java.lang.String">
+  		select station_id
+  		from t_station_range
+  		group by station_id
+  </select>
+
+  <select id="getStationRangeNameById" resultType="java.lang.String">
+  		select station_name
+  		from t_station_range
+			where station_id = #{station_id}
+  		group by station_name
+  </select>
+
+  <select id="selectByStationId" resultMap="StationCheckResultMap">
+  		select *
+  		from t_station_check
+			where station_id = #{station_id}
+  </select>
+
+  <select id="selectByStationIdAndSeq" resultMap="StationCheckResultMap">
+  		select *
+  		from t_station_check
+			where station_id = #{station_id} and seq=#{seq}
+  </select>
+  
+  <insert id="insertStationCheck"  parameterType="com.dianxin.model.bo.StationCheck">
+        insert into t_station_check(station_id, station_name, user_id, user_name, seq) 
+        values (#{station_id}, #{station_name}, #{user_id}, #{user_name}, #{seq} )
+  </insert>
+  
+  <update id="updateStationCheck" parameterType="com.dianxin.model.bo.StationCheck">
+        update t_station_check 
+            set user_id = #{user_id},
+            user_name = #{user_name}
+           where station_id = #{station_id} and seq = #{seq}
+  </update>
+  
+  <delete id="deleteStationCheck" parameterType="java.lang.String">
+    delete from  t_station_check where station_id = #{station_id}
+   </delete>
+   
+   <select id="getMaxLonOfRange" resultType="java.lang.Double">
+  		select max(longitude)
+  		from t_station_range
+			where station_id = #{station_id}
+  </select>
+  
+   <select id="getMaxLatOfRange" resultType="java.lang.Double">
+  		select max(latitude)
+  		from t_station_range
+			where station_id = #{station_id}
+  </select>
+  
+   <select id="getMinLonOfRange" resultType="java.lang.Double">
+  		select min(longitude)
+  		from t_station_range
+			where station_id = #{station_id}
+  </select>
+  
+   <select id="getMinLatOfRange" resultType="java.lang.Double">
+  		select min(latitude)
+  		from t_station_range
+			where station_id = #{station_id}
+  </select>
+
+</mapper>

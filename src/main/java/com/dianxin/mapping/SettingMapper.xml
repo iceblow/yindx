@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dianxin.dao.SettingMapper" >
+  <resultMap id="BaseResultMap" type="com.dianxin.model.bo.Setting" >
+    <id column="setting_id" property="setting_id" jdbcType="INTEGER" />
+    <result column="type" property="type" jdbcType="VARCHAR" />
+    <result column="setting" property="setting" jdbcType="INTEGER" />
+  </resultMap>
+  <resultMap id="HelpResultMap" type="com.dianxin.model.bo.Help" >
+    <id column="help_id" property="help_id" jdbcType="INTEGER" />
+    <result column="title" property="title" jdbcType="VARCHAR" />
+    <result column="content" property="content" jdbcType="CLOB" />
+    <result column="user_id" property="user_id" jdbcType="INTEGER" />
+  </resultMap>
+  <select id="selectSetting" resultMap="BaseResultMap" >
+    select setting_id, type, setting
+    from t_setting
+  </select>
+  <select id="selectSettingByType" resultMap="BaseResultMap" parameterType="java.lang.String">
+    select setting_id, type, setting
+    from t_setting
+    where type = #{type,jdbcType=VARCHAR}
+  </select>
+  <insert id="insertSetting" parameterType="java.util.Map" >
+    insert into t_setting(setting_id, type, setting)
+     values (
+        SEQ_SETTING_ID.nextval,
+        #{type,jdbcType=VARCHAR},
+        #{setting,jdbcType=INTEGER}
+        )
+  </insert>
+  <update id="updateSetting" parameterType="java.util.Map" >
+    update t_setting
+    set setting = #{setting,jdbcType=VARCHAR},updatedate=sysdate
+    where type = #{type,jdbcType=VARCHAR}
+  </update>
+  <update id="updateUserScore" parameterType="java.util.Map" >
+    update t_user_exp
+    set score = score + #{score},updatedate=sysdate
+    where user_id = #{user_id}
+  </update>
+  <insert id="insertFeedback" parameterType="java.util.Map">
+	  insert into t_feedback(feedback_id, content, user_id)
+	     values (
+	        SEQ_FEEDBACK_ID.nextval,
+	        #{content,jdbcType=VARCHAR},
+	        #{user_id,jdbcType=INTEGER}
+	        )
+  </insert>
+  <!-- 帮助中心 -->
+  <select id="selectHelpCount"  resultType="java.lang.Integer" >
+       select count(*)
+       from t_help
+  </select>
+  <select id="pageQueryHelp" resultMap="HelpResultMap" parameterType="java.util.Map">
+    select * from (
+        select rownum as rn, a.* from (
+        select t.help_id, t.title
+  from t_help t 
+    order by t.help_id desc
+            ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select>
+  <select id="selectHelpDetail" resultMap="HelpResultMap" parameterType="java.lang.Integer">
+        select t.help_id, t.title,t.content
+        from t_help t
+        where t.help_id=#{help_id}
+  </select>
+  <insert id="insertHelp" parameterType="com.dianxin.model.bo.Help">
+      insert into t_help(help_id,title, content, user_id)
+         values (
+            SEQ_HELP_ID.nextval,
+            #{title,jdbcType=VARCHAR},
+            #{content,jdbcType=CLOB},
+            #{user_id,jdbcType=INTEGER}
+            )
+  </insert>
+  <!-- 用户积分历史 -->
+  <select id="selectUserScoreHistoryCount"  resultType="java.lang.Integer"  parameterType="java.lang.Integer">
+       select count(*)
+       from VM_USER_SCORE
+       where holderid = #{user_id,jdbcType=INTEGER}
+  </select>
+  <select id="pageQueryUserScoreHistory" resultType="com.dianxin.model.vo.ScoreVo" parameterType="java.util.Map">
+    select * from (
+        select rownum as rn, a.* from (
+            select * from VM_USER_SCORE 
+            where holderid = #{user_id,jdbcType=INTEGER} 
+            order by createtime desc
+            ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select>
+  
+  <select id="selectUserScoreBySelecter" resultType="com.dianxin.model.vo.ScoreShVo" >
+  select * from 
+(select n.*,ROWNUM as rn from
+(
+    select t.*, c.SS_ID, c.SS_NAME, c.STATION_ID, c.STATION_NAME,us.USERNAME,us.DEPTNAME
+  from VM_USER_SCORE t, t_station_check b, VW_INTERFACE_AEFSTATION c , VW_INTERFACE_AEFUSER us
+
+ where 
+   t.HOLDERID = b.USER_ID and b.STATION_ID = c.STATION_ID and t.HOLDERID = us.ID
+    <trim >
+      <if test="user_id != null" >
+        <![CDATA[ and t.holderid = #{user_id,jdbcType=INTEGER }]]>
+      </if>
+      <if test="type != null" >
+        <![CDATA[ and t.type = #{type,jdbcType=INTEGER} ]]>
+      </if>
+      <if test="start_time != null" >
+        <![CDATA[ and t.CREATETIME >= #{start_time,jdbcType=DATE} ]]>
+      </if>
+      <if test="end_time != null" >
+        <![CDATA[ and t.CREATETIME <= #{end_time,jdbcType=DATE} ]]>
+      </if>
+      <if test="ss_id != null or station_id !=null" >
+       and t.holderid in (select a.user_id
+                        	from t_station_check a
+                       		where 1 =1 
+                       		<trim prefix="and (" suffix=")" prefixOverrides = "and">
+						      <if test="ss_id != null" >
+						          a.station_id like #{ss_id,jdbcType=VARCHAR} 
+						      </if>
+						      <if test="station_id != null" >
+						         and a.station_id = #{station_id,jdbcType=VARCHAR}
+						      </if>
+						    </trim>        
+						  <![CDATA[   ) ]]>
+      </if>
+      order by t.CREATETIME desc ) n
+    </trim>
+ 	 ) n2
+        where rn BETWEEN #{start,jdbcType=INTEGER} and #{end,jdbcType=INTEGER}
+
+  </select>
+  
+  <select id="getUserScoreCount" resultType="long" >
+  select count(*)
+  from VM_USER_SCORE t, t_station_check b, VW_INTERFACE_AEFSTATION c , VW_INTERFACE_AEFUSER us
+
+ where 
+   t.HOLDERID = b.USER_ID and b.STATION_ID = c.STATION_ID and t.HOLDERID = us.ID
+    <trim >
+      <if test="user_id != null" >
+        <![CDATA[ and t.holderid = #{user_id,jdbcType=INTEGER }]]>
+      </if>
+      <if test="type != null" >
+        <![CDATA[ and t.type = #{type,jdbcType=INTEGER} ]]>
+      </if>
+      <if test="start_time != null" >
+        <![CDATA[ and t.CREATETIME >= #{start_time,jdbcType=DATE} ]]>
+      </if>
+      <if test="end_time != null" >
+        <![CDATA[ and t.CREATETIME <= #{end_time,jdbcType=DATE} ]]>
+      </if>
+      <if test="ss_id != null or station_id !=null" >
+       and t.holderid in (select a.user_id
+                        	from t_station_check a
+                       		where 1 =1 
+                       		<trim prefix="and (" suffix=")" prefixOverrides = "and">
+						      <if test="ss_id != null" >
+						         <![CDATA[ a.station_id like #{ss_id,jdbcType=VARCHAR}]]>
+						      </if>
+						      <if test="station_id != null" >
+						          <![CDATA[and a.station_id = #{station_id,jdbcType=VARCHAR}]]>
+						      </if>
+						    </trim>        
+						  <![CDATA[   ) ]]>
+      </if>
+    </trim>
+  </select>
+</mapper>

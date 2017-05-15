@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dianxin.dao.TemplateMapper" >
+  <resultMap id="TemplateResultMap" type="com.dianxin.model.bo.Template" >
+    <id column="template_id" property="template_id" jdbcType="INTEGER" />
+    <result column="typeid" property="typeid" jdbcType="VARCHAR" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+    <result column="topic" property="topic" jdbcType="VARCHAR" />
+    <result column="imgs" property="imgs" jdbcType="VARCHAR" />
+    <result column="update_id" property="update_id" jdbcType="INTEGER" />
+    <result column="createdate" property="createdate" jdbcType="TIMESTAMP" />
+    <result column="updatedate" property="updatedate" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <resultMap id="CateResultMap" type="com.dianxin.model.bo.Category" >
+    <id column="category_id" property="category_id" jdbcType="INTEGER" />
+    <id column="pid" property="pid" jdbcType="INTEGER" />
+    <result column="name" property="name" jdbcType="VARCHAR" />
+  </resultMap>
+  <select id="selectTemplateById" resultMap="TemplateResultMap" parameterType="java.lang.Integer" >
+    select template_id, typeid,name,topic,imgs,update_id,createdate,updatedate
+    from t_template
+    <if test="_parameter != null" >
+            where template_id = #{template_id,jdbcType=INTEGER}
+     </if>
+  </select>
+  <select id="selectTemplateByDeviceType" resultMap="TemplateResultMap" parameterType="java.lang.String" >
+    select template_id,typeid, name,topic,imgs,update_id,createdate,updatedate
+    from t_template
+    <if test="_parameter != null" >
+            where typeid = #{typeid,jdbcType=VARCHAR}
+     </if>
+  </select>
+  <select id="selectTemplateCate" resultMap="CateResultMap" parameterType="java.lang.Integer" >
+    select category_id, name
+    from t_template_cate
+     where pid = 0 and template_id = #{template_id,jdbcType=INTEGER}
+  </select>
+  <select id="selectSubCate" resultMap="CateResultMap" parameterType="java.lang.Integer" >
+    select category_id, name
+    from t_template_cate
+     where pid =  #{category_id,jdbcType=INTEGER}
+  </select>
+  
+  <insert id="insertCategory" parameterType="java.util.Map">
+        insert into T_TEMPLATE_CATE(category_id, template_id, name) values
+        (seq_category_id.nextval, #{template_id}, #{name})
+  </insert>
+  
+   <insert id="insertCategoryRid" parameterType="com.dianxin.model.bo.Category">
+   <selectKey resultType="java.lang.Integer" keyProperty="category_id" order="AFTER" >
+      SELECT seq_category_id.CURRVAL  AS category_id from dual
+    </selectKey>
+        insert into T_TEMPLATE_CATE(category_id, template_id, name) values
+        (seq_category_id.nextval, #{template_id}, #{name})
+  </insert>
+  <update id="updateTemplate" parameterType="com.dianxin.model.bo.Template">
+  	update t_template set
+  		TYPEID = #{typeid},
+  		NAME = #{name},
+  		TOPIC = #{topic},
+  		update_id = #{update_id},
+  		UPDATEDATE = #{updatedate}
+  		where  TEMPLATE_ID = #{template_id}
+  </update>
+  <insert id="insertTemplate" parameterType="com.dianxin.model.bo.Template">
+  <selectKey resultType="java.lang.Integer" keyProperty="template_id" order="AFTER" >
+      SELECT seq_template_id.CURRVAL  AS template_id from dual
+    </selectKey>
+  		insert into 
+  		t_template(
+  			TEMPLATE_ID,
+  			TYPEID,
+  			NAME,
+  			TOPIC,
+  			update_id,
+  			CREATEDATE,
+  			UPDATEDATE
+  		) values (
+  			seq_template_id.nextval,
+  			#{typeid},
+  			#{name},
+  			#{topic},
+  			#{update_id},
+  			#{createdate},
+  			#{updatedate}
+  		)
+   </insert>
+  <insert id="updateCategory" parameterType="java.util.Map">
+        update T_TEMPLATE_CATE 
+        set name = #{name}
+        where category_id = #{category_id}
+  </insert>
+  <insert id="insertSubCategory" parameterType="java.util.Map">
+        insert into T_TEMPLATE_CATE(category_id, template_id, name,pid) values
+        (seq_category_id.nextval, #{template_id}, #{name},#{pid})
+  </insert>
+  
+  <select id="queryListCount"  resultType="java.lang.Integer"  parameterType="java.util.Map">
+       select count(*)
+       from t_template
+       <where> 
+         <if test="name != null and name != ''">
+   			 and name like  '%'||#{name}||'%'
+ 		 </if>
+ 		<if test="typeid != null and typeid != ''">
+ 			 and typeid = #{typeid}
+ 		</if>
+       </where>
+   </select>
+   
+   <select id="queryList"  resultType="com.dianxin.model.vo.TemplateVo" parameterType="java.util.Map">
+      select * from (
+        select rownum as rn, a.* from (
+       select t.*,  vd.typename
+		  from t_template    t,
+		       VW_INTERFACE_AEFDEVICETYPE vd
+		 where 
+   			 t.typeid = vd.TYPEID
+   			  <if test="name != null and name != ''">
+   			 and t.name like '%'||#{name}||'%'
+   			 </if>
+   			  <if test="typeid != null and typeid != ''">
+   			 and t.typeid = #{typeid}
+   			 </if>
+   			 order by t.createdate desc
+ 		  ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+   </select>
+   <delete id="delCategory" parameterType="java.lang.Integer">
+   	delete from t_template_cate where template_id =  #{template_id}
+   </delete>
+   <delete id="delCategoryById" parameterType="java.lang.Integer">
+   	delete from t_template_cate where category_id =  #{category_id}
+   </delete>
+   
+   <delete id="delTemplate" parameterType="java.lang.Integer">
+   	delete from t_template where template_id =  #{template_id}
+   </delete>
+   <select id="selectCategoryByCategoryId" resultMap="CateResultMap" parameterType="java.lang.Integer" >
+    select category_id, name,pid
+    from t_template_cate
+     where category_id =  #{category_id,jdbcType=INTEGER}
+  </select>
+</mapper>

@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.dianxin.dao.RealMapper" >
+
+  <select id="selectCountNotEnd"  resultType="java.lang.Integer"  parameterType="java.lang.Integer">
+       select count(*)
+  from VW_INTERFACE_AEFRECORD a
+ where a.isend = 0
+   and a.laststep != 15
+   and exists (select *
+          from VW_INTERFACE_PERSONINCHARGE b
+         where a.aestationid = b.station_id
+           and a.alarmtemplateid = b.templateid
+           and b.id = #{user_id,jdbcType=INTEGER})
+<!--    and not exists (select * -->
+<!--           from VW_INTERFACE_AEFRECORDFLOW c -->
+<!--          where c.RECORDID = a.aefid -->
+<!--            and c.LASTSTEP = 11) -->
+  </select>
+   <select id="pageQueryNotEnd" resultType="com.dianxin.model.bo.Real" parameterType="java.util.Map">
+    select * from (
+        select rownum as rn, a.* from (
+				select a.aefid,
+				       a.topic,
+				       a.aecreatedate,
+				       a.aelastupdateddate,
+				       a.aestationid as station_id,
+				       c.station_name,
+				       c.loctype,
+				       c.longitude,
+				       c.latitude,
+				       c.address
+				  from VW_INTERFACE_AEFRECORD a, VM_STATION_LOCATION c
+				 where a.aestationid = c.station_id(+)
+				   and a.isend = 0
+   				   and a.laststep != 15
+				   and exists (select *
+				          from VW_INTERFACE_PERSONINCHARGE b
+				         where a.aestationid = b.station_id
+				           and a.alarmtemplateid = b.templateid
+				           and b.id = #{user_id,jdbcType=INTEGER})
+<!-- 				   and not exists (select * -->
+<!-- 				          from VW_INTERFACE_AEFRECORDFLOW c -->
+<!-- 				         where c.RECORDID = a.aefid -->
+<!-- 				           and c.LASTSTEP = 11)       -->
+            ) a)  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>
+  </select>
+   
+   
+  
+   <select id="pageActualList" resultType="com.dianxin.model.bo.Real" >
+         select * from (
+        	select rownum as rn, a.* from ( 
+				 select a.aefid,
+				       a.topic,
+				       a.aecreatedate,
+				       a.laststep,
+				       s.ss_name, 
+				       s.station_name
+<!-- 				       (select c.HOLDERID -->
+<!--           					from VW_INTERFACE_AEFRECORDFLOW c -->
+<!--          					where a.aefid = c.recordid -->
+<!--           					 and c.laststep = 11 order by createtime desc -->
+<!--            				) as username -->
+				  from VW_INTERFACE_ALLAEFRECORD a , VW_INTERFACE_AEFSTATION  s
+			 	 where a.aestationid = s.station_id 
+			 	  <if test="step != null">
+         			and a.laststep = #{step,jdbcType=INTEGER}
+    			</if> 
+    			 <if test="start_date != null and start_date.length()>0">
+           		  <![CDATA[and to_char(a.aecreatedate,'yyyy-MM-dd') >= #{start_date}]]>
+        		 </if>
+    			 <if test="end_date != null and end_date.length()>0">
+        	 		<![CDATA[and to_char(a.aecreatedate,'yyyy-MM-dd') <= #{end_date}]]>
+         		</if>
+         		 <if test="area_id != null and area_id !='' and (xiaoqu==null or xiaoqu == '') and user_id == null and ids !=null  ">
+    				and exists (select *
+          		from VW_INTERFACE_PERSONINCHARGE b
+         		where a.AESTATIONID = b.station_id
+          		 and a.alarmtemplateid = b.templateid
+           		 and b.id in
+           		 <if test="ids!=null">
+           		 	 <foreach item="ids" collection="ids"  open="(" separator="," close=")">
+           		 	#{ids}
+    	 		 </foreach>
+           		 </if>
+           		<if test="ids==null">(0)</if>
+    	 		 )
+    			</if>
+    			<if test="xiaoqu!=null and xiaoqu != '' and user_id == null and ids !=null ">
+    				and exists (select *
+          		from VW_INTERFACE_PERSONINCHARGE b
+         		where a.AESTATIONID = b.station_id
+          		 and a.alarmtemplateid = b.templateid
+           		 and b.id in
+           		  <if test="ids!=null">
+           		 	 <foreach item="ids" collection="ids"  open="(" separator="," close=")">
+           		 	#{ids}
+    	 		 </foreach>
+           		 </if>
+           		<if test="ids==null">(0)</if>
+    	 		 )
+    			</if>
+				<if test="user_id != null ">
+         	 	and exists (select *
+          		from VW_INTERFACE_PERSONINCHARGE b
+         		where a.AESTATIONID = b.station_id
+          		 and a.alarmtemplateid = b.templateid
+           		 and b.id = #{user_id,jdbcType=INTEGER})
+    			</if> 
+    			order by a.aecreatedate desc
+            ) a   )  b 
+        <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]> 
+  </select>
+  
+<select id="selectActualUserBYId" parameterType="string" resultType="com.dianxin.model.bo.Real">
+		select username from	(select a1.*,rownum as rn from    ( select c.holderid as username
+		from VW_INTERFACE_AEFRECORDFLOW c,VW_INTERFACE_ALLAEFRECORD a
+		where a.aefid = c.recordid
+		and c.laststep = 11 
+		and a.aefid = #{id}
+		order
+		 by createtime desc) a1) where rn = 1
+</select>
+  
+   <select id="getPageActualListCount"  resultType="java.lang.Integer" >
+        select count(*) from (
+        	select rownum as rn, a.* from ( 
+				 select a.aefid,
+				       a.topic,
+				       a.aecreatedate,
+				       a.laststep,
+				       s.ss_name, 
+				       s.station_name,
+				       (select b.username
+          					from VW_INTERFACE_PERSONINCHARGE b
+         					where a.aefid = b.station_id
+          					 and a.alarmtemplateid = b.templateid
+           				) as username
+				  from VW_INTERFACE_ALLAEFRECORD a , VW_INTERFACE_AEFSTATION  s
+			 	 where a.aestationid = s.station_id 
+			 	  <if test="step != null">
+         			and a.laststep = #{step,jdbcType=INTEGER}
+    			</if> 
+    			 <if test="start_date != null and start_date.length()>0">
+           		  <![CDATA[and to_char(a.aecreatedate,'yyyy-MM-dd') >= #{start_date}]]>
+        		 </if>
+    			 <if test="end_date != null and end_date.length()>0">
+        	 		<![CDATA[and to_char(a.aecreatedate,'yyyy-MM-dd') <= #{end_date}]]>
+         		</if>
+    			<if test="area_id != null and area_id !='' and (xiaoqu==null or xiaoqu == '') and user_id == null and ids !=null ">
+    				and exists (select *
+          		from VW_INTERFACE_PERSONINCHARGE b
+         		where a.AESTATIONID = b.station_id
+          		 and a.alarmtemplateid = b.templateid
+           		 and b.id in
+           		  <if test="ids!=null">
+           		 	 <foreach item="ids" collection="ids"  open="(" separator="," close=")">
+           		 	#{ids}
+    	 		 </foreach>
+           		 </if>
+           		<if test="ids==null">(0)</if>
+    	 		 )
+    			</if>
+    			<if test="xiaoqu!=null and xiaoqu != '' and user_id == null and ids !=null ">
+    				and exists (select *
+          		from VW_INTERFACE_PERSONINCHARGE b
+         		where a.AESTATIONID = b.station_id
+          		 and a.alarmtemplateid = b.templateid
+           		 and b.id in
+           		 <if test="ids!=null">
+           		 	 <foreach item="ids" collection="ids"  open="(" separator="," close=")">
+           		 	#{ids}
+    	 		 </foreach>
+           		 </if>
+           		<if test="ids==null">(0)</if>
+    	 		 )
+    			</if>
+				<if test="user_id != null ">
+         	 	and exists (select *
+          		from VW_INTERFACE_PERSONINCHARGE b
+         		where a.AESTATIONID = b.station_id
+          		 and a.alarmtemplateid = b.templateid
+           		 and b.id = #{user_id,jdbcType=INTEGER})
+    			</if> 
+            ) a)  b 
+  </select>
+  
+
+  
+  <select id="selectRealDetail" resultType="com.dianxin.model.bo.RealDetail" parameterType="java.lang.String">
+		  select a.aefid,
+		       a.topic,
+		       a.laststep,
+		       b.name as stepname,
+		       a.alarmtemplateid,
+		       a.aecreatedate,
+		       a.aelastupdateddate,
+		       a.aestationid as station_id,
+		       c.station_name,
+		       c.loctype,
+		       c.longitude,
+		       c.latitude,
+		       c.address
+		  from VW_INTERFACE_AEFRECORD a, VW_INTERFACE_AEFWORKFLOWSYMBOL b, VM_STATION_LOCATION c
+		 where a.laststep = b.id and  a.aestationid = c.station_id(+)
+		    and a.aefid=#{aefid}
+  </select>
+  <select id="selectFlowsById" resultType="com.dianxin.model.bo.AefRecordFlow" parameterType="java.lang.String">
+	  select a.*, b.name as stepname
+	  from VW_INTERFACE_AEFRECORDFLOW a, VW_INTERFACE_AEFWORKFLOWSYMBOL b
+	 where a.laststep = b.id
+	   and a.recordid = #{aefid}
+  </select>
+  <insert id="insertRealFlow" parameterType="com.dianxin.model.bo.AefRecordFlow">
+        insert into SSUSER.AEF_AEFRECORDFLOW (recordid, laststep, holderid, telephonenumber, createtime, isrecordfile, aestationid,alarmtemplateid)
+        values (#{recordid}, 11, #{holderid}, #{telephonenumber}, sysdate, 0, #{aestationid},#{alarmtemplateid})
+  </insert>
+  <update id="updateAefRecord" parameterType="java.lang.String" >
+        update VW_INTERFACE_AEFRECORD set 
+            laststep = 11,
+            aelastupdateddate = sysdate
+         where aefid=#{aefid}
+         <!-- SSUSER.AEFRECORD -->
+  </update>
+  <insert id="insertRealExp" parameterType="com.dianxin.model.bo.RealExp">
+        insert into t_real_exp(aefid, user_id
+	        <if test="content != null" >
+	        , content
+	        </if>
+	        <if test="imgs != null" >
+            , imgs
+            </if>
+            <if test="audio != null" >
+            , audio
+            </if>
+        ) values (#{aefid},  #{user_id}
+            <if test="content != null" >
+                , #{content}
+            </if>
+            <if test="imgs != null" >
+                , #{imgs}
+            </if>
+            <if test="audio != null" >
+                , #{audio}
+            </if>
+            )
+  </insert>
+  
+  <select id="selectRealDetailById" resultType="com.dianxin.model.bo.RealDetail" parameterType="java.lang.String">
+  	select * from (
+  		select rownum as rn, a.* from ( 
+  			select a.aefid,
+  			a.topic,
+	        a.aecreatedate,
+	        a.laststep,
+	        s.ss_name, 
+	        s.station_name,
+	        (select b.username
+				from VW_INTERFACE_PERSONINCHARGE b
+				where a.aefid = b.station_id
+				and a.alarmtemplateid = b.templateid
+			) as username
+  		from VW_INTERFACE_ALLAEFRECORD a , VW_INTERFACE_AEFSTATION  s
+  		where a.aestationid = s.station_id and a.aefid=#{aefid}
+  	) a ) b
+  </select>
+  
+<!--     <select id="getPageActualListCount"  resultType="java.lang.Integer" > -->
+<!--         select count(*) from ( -->
+<!--         	select rownum as rn, a.* from (  -->
+<!-- 				 select a.aefid, -->
+<!-- 				       a.topic, -->
+<!-- 				       a.aecreatedate, -->
+<!-- 				       a.laststep, -->
+<!-- 				       s.ss_name,  -->
+<!-- 				       s.station_name, -->
+<!-- 				       (select b.username -->
+<!--           					from VW_INTERFACE_PERSONINCHARGE b -->
+<!--          					where a.aefid = b.station_id -->
+<!--           					 and a.alarmtemplateid = b.templateid -->
+<!--            				) as username -->
+<!-- 				  from VW_INTERFACE_ALLAEFRECORD a , VW_INTERFACE_AEFSTATION  s -->
+<!-- 			 	 where a.aestationid = s.station_id  -->
+<!-- 			 	  <if test="step != null"> -->
+<!--          			and a.laststep = #{step,jdbcType=INTEGER} -->
+<!--     			</if>  -->
+<!--     			 <if test="start_date != null and start_date.length()>0"> -->
+<!--            		  <![CDATA[and to_char(a.aecreatedate,'yyyy-MM-dd') >= #{start_date}]]> -->
+<!--         		 </if> -->
+<!--     			 <if test="end_date != null and end_date.length()>0"> -->
+<!--         	 		<![CDATA[and to_char(a.aecreatedate,'yyyy-MM-dd') <= #{end_date}]]> -->
+<!--          		</if> -->
+<!--          		 <if test="area_id != null "> -->
+<!--          			and a.aestationid LIKE concat(#{area_id,jdbcType=INTEGER},'%') -->
+<!--     			</if>  -->
+<!--     	 		<if test="xiaoqu != null "> -->
+<!--          			and a.aestationid = #{xiaoqu,jdbcType=INTEGER} -->
+<!--     			</if>  -->
+<!-- 				<if test="user_id != null "> -->
+<!--          	 	and exists (select * -->
+<!--           		from VW_INTERFACE_PERSONINCHARGE b -->
+<!--          		where a.aefid = b.station_id -->
+<!--           		 and a.alarmtemplateid = b.templateid -->
+<!--            		 and b.id = #{user_id,jdbcType=INTEGER}) -->
+<!--     			</if>  -->
+<!--             ) a)  b  -->
+<!--   </select> -->
+
+<!--   <select id="pageActualList" resultType="com.dianxin.model.bo.Real" > -->
+<!--          select * from ( -->
+<!--         	select rownum as rn, a.* from (  -->
+<!-- 				 select a.aefid, -->
+<!-- 				       a.topic, -->
+<!-- 				       a.aecreatedate, -->
+<!-- 				       a.laststep, -->
+<!-- 				       s.ss_name,  -->
+<!-- 				       s.station_name, -->
+<!-- 				       (select b.username -->
+<!--           					from VW_INTERFACE_PERSONINCHARGE b -->
+<!--          					where a.aefid = b.station_id -->
+<!--           					 and a.alarmtemplateid = b.templateid -->
+<!--            				) as username -->
+<!-- 				  from VW_INTERFACE_ALLAEFRECORD a , VW_INTERFACE_AEFSTATION  s -->
+<!-- 			 	 where a.aestationid = s.station_id  -->
+<!-- 			 	  <if test="step != null"> -->
+<!--          			and a.laststep = #{step,jdbcType=INTEGER} -->
+<!--     			</if>  -->
+<!--     			 <if test="start_date != null and start_date.length()>0"> -->
+<!--            		  <![CDATA[and to_char(a.aecreatedate,'yyyy-MM-dd') >= #{start_date}]]> -->
+<!--         		 </if> -->
+<!--     			 <if test="end_date != null and end_date.length()>0"> -->
+<!--         	 		<![CDATA[and to_char(a.aecreatedate,'yyyy-MM-dd') <= #{end_date}]]> -->
+<!--          		</if> -->
+<!--          		 <if test="area_id != null "> -->
+<!--          			and a.aestationid LIKE concat(#{area_id,jdbcType=INTEGER},'%') -->
+<!--     			</if>  -->
+<!--     	 		<if test="xiaoqu != null "> -->
+<!--          			and a.aestationid = #{xiaoqu,jdbcType=INTEGER} -->
+<!--     			</if>  -->
+<!-- 				<if test="user_id != null "> -->
+<!--          	 	and exists (select * -->
+<!--           		from VW_INTERFACE_PERSONINCHARGE b -->
+<!--          		where a.aefid = b.station_id -->
+<!--           		 and a.alarmtemplateid = b.templateid -->
+<!--            		 and b.id = #{user_id,jdbcType=INTEGER}) -->
+<!--     			</if>  -->
+<!--     			order by a.aecreatedate desc -->
+<!--             ) a   )  b  -->
+<!--         <![CDATA[where b.rn >= #{startIndex,jdbcType=INTEGER} and b.rn <= #{endIndex,jdbcType=INTEGER}]]>  -->
+<!--   </select> -->
+  
+</mapper>

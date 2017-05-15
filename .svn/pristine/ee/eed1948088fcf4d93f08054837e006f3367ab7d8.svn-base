@@ -1,0 +1,5 @@
+uploadFilePath=D:\\upload\\
+#fileRootUrl=http://192.168.1.44:8088/upload/
+fileRootUrl=http://122.229.30.121:15001/upload/
+webRootUrl=http://122.229.30.121:15001/dianxin/
+#webRootUrl=http://localhost:8080/dianxin/
